@@ -66,7 +66,7 @@ func (init *Initializer) Initialize() *cef.TCEFApplication {
 	app.AddCustomCommandLine("--disable-background-networking", "")
 	app.AddCustomCommandLine("--disable-sync", "")
 	app.AddCustomCommandLine("--disable-translate", "")
-	app.AddCustomCommandLine("--no-proxy-server", "")
+	//app.AddCustomCommandLine("--no-proxy-server", "")
 	app.AddCustomCommandLine("--disable-renderer-backgrounding", "")
 
 	// 统一的禁用功能配置（避免重复）
