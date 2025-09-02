@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>本地测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .success {
+            color: #28a745;
+            font-size: 18px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .info {
+            background: #e7f3ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 CEF浏览器测试页面</h1>
+        <div class="success">✅ 如果您看到这个页面，说明CEF浏览器正常工作！</div>
+        
+        <div class="info">
+            <h3>🔍 User-Agent检测:</h3>
+            <p id="user-agent"></p>
+        </div>
+        
+        <div class="info">
+            <h3>📱 环境信息:</h3>
+            <p><strong>平台:</strong> <span id="platform"></span></p>
+            <p><strong>语言:</strong> <span id="language"></span></p>
+            <p><strong>屏幕:</strong> <span id="screen"></span></p>
+        </div>
+        
+        <div class="info">
+            <h3>🧪 指纹伪装状态:</h3>
+            <p id="fingerprint-status"></p>
+        </div>
+    </div>
+
+    <script>
+        // 显示User-Agent
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        
+        // 显示环境信息
+        document.getElementById('platform').textContent = navigator.platform;
+        document.getElementById('language').textContent = navigator.language;
+        document.getElementById('screen').textContent = screen.width + 'x' + screen.height;
+        
+        // 检查指纹伪装状态
+        const status = window.fingerprintOverridden ? '✅ 指纹伪装已激活' : '❌ 指纹伪装未激活';
+        document.getElementById('fingerprint-status').textContent = status;
+        
+        // 输出到控制台
+        console.log('=== CEF浏览器测试页面 ===');
+        console.log('User-Agent:', navigator.userAgent);
+        console.log('Platform:', navigator.platform);
+        console.log('Language:', navigator.language);
+        console.log('指纹伪装状态:', window.fingerprintOverridden ? '已激活' : '未激活');
+    </script>
+</body>
+</html>

@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>浏览器指纹检测测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .fingerprint-item {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }
+        .fingerprint-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .fingerprint-value {
+            font-family: monospace;
+            background: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+        .test-canvas {
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+        .status-ok {
+            color: #4CAF50;
+        }
+        .status-warning {
+            color: #ff9800;
+        }
+        .status-error {
+            color: #f44336;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 浏览器指纹检测测试</h1>
+        <p>此页面用于验证浏览器指纹模拟是否成功。请检查以下信息是否符合配置预期。</p>
+    </div>
+
+    <div class="container section">
+        <h2>📱 基础环境信息</h2>
+        <div id="basic-info"></div>
+    </div>
+
+    <div class="container section">
+        <h2>🖥️ 屏幕与显示信息</h2>
+        <div id="screen-info"></div>
+    </div>
+
+    <div class="container section">
+        <h2>🎨 Canvas 指纹测试</h2>
+        <div id="canvas-info">
+            <canvas id="canvas-test" class="test-canvas" width="200" height="50"></canvas>
+            <div id="canvas-hash"></div>
+        </div>
+    </div>
+
+    <div class="container section">
+        <h2>🎮 WebGL 指纹测试</h2>
+        <div id="webgl-info"></div>
+    </div>
+
+    <div class="container section">
+        <h2>🔊 音频指纹测试</h2>
+        <div id="audio-info"></div>
+    </div>
+
+    <div class="container section">
+        <h2>🌐 网络与连接信息</h2>
+        <div id="network-info"></div>
+    </div>
+
+    <script>
+        // 🚨 立即执行测试脚本 - 不等待DOM加载
+        console.log('🚨 立即执行指纹检查脚本...');
+        
+        // 立即检查指纹状态
+        function immediateCheck() {
+            console.log('=== 立即指纹检查 ===');
+            console.log('User-Agent:', navigator.userAgent);
+            console.log('Platform:', navigator.platform);
+            console.log('CPU Cores:', navigator.hardwareConcurrency);
+            console.log('Language:', navigator.language);
+            console.log('Languages:', navigator.languages);
+            console.log('Screen:', screen.width + 'x' + screen.height);
+            
+            // 检查指纹覆盖状态
+            if (window.fingerprintOverridden) {
+                console.log('✅ 指纹覆盖状态: 成功');
+            } else {
+                console.log('❌ 指纹覆盖状态: 失败或未执行');
+            }
+            
+            // 立即更新页面内容
+            setTimeout(() => {
+                updatePageContent();
+            }, 100);
+        }
+        
+        // 更新页面内容
+        function updatePageContent() {
+            try {
+                // 基础环境信息
+                const basicInfo = document.getElementById('basic-info');
+                if (basicInfo) {
+                    basicInfo.innerHTML = `
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">User Agent:</span>
+                            <span class="fingerprint-value">${navigator.userAgent}</span>
+                        </div>
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">平台:</span>
+                            <span class="fingerprint-value">${navigator.platform}</span>
+                        </div>
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">语言:</span>
+                            <span class="fingerprint-value">${navigator.language}</span>
+                        </div>
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">CPU核心数:</span>
+                            <span class="fingerprint-value">${navigator.hardwareConcurrency}</span>
+                        </div>
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">指纹覆盖状态:</span>
+                            <span class="fingerprint-value">${window.fingerprintOverridden ? '✅ 成功' : '❌ 失败'}</span>
+                        </div>
+                    `;
+                }
+                
+                // 屏幕信息
+                const screenInfo = document.getElementById('screen-info');
+                if (screenInfo) {
+                    screenInfo.innerHTML = `
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">屏幕分辨率:</span>
+                            <span class="fingerprint-value">${screen.width}x${screen.height}</span>
+                        </div>
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">可用分辨率:</span>
+                            <span class="fingerprint-value">${screen.availWidth}x${screen.availHeight}</span>
+                        </div>
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">像素比:</span>
+                            <span class="fingerprint-value">${window.devicePixelRatio}</span>
+                        </div>
+                    `;
+                }
+                
+                // 立即执行其他测试
+                testCanvasFingerprint();
+                testWebGLFingerprint();
+                testAudioFingerprint();
+                testNetworkInfo();
+                
+                console.log('✅ 页面内容更新完成');
+            } catch(e) {
+                console.error('❌ 页面内容更新失败:', e);
+            }
+        }
+        
+        // Canvas 指纹测试
+        function testCanvasFingerprint() {
+            try {
+                const canvas = document.getElementById('canvas-test');
+                const ctx = canvas.getContext('2d');
+                
+                // 绘制测试图案
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#f60';
+                ctx.fillRect(125, 1, 62, 20);
+                ctx.fillStyle = '#069';
+                ctx.fillText('🔍Canvas指纹测试', 2, 15);
+                ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+                ctx.fillText('🎨Canvas指纹测试', 4, 17);
+
+                // 获取Canvas数据URL
+                const dataURL = canvas.toDataURL();
+                const hash = btoa(dataURL.slice(-50)); // 简单哈希
+
+                const container = document.getElementById('canvas-hash');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">Canvas哈希:</span>
+                            <span class="fingerprint-value">${hash.slice(0, 20)}...</span>
+                        </div>
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">Canvas长度:</span>
+                            <span class="fingerprint-value">${dataURL.length}</span>
+                        </div>
+                    `;
+                }
+                console.log('✅ Canvas指纹测试完成');
+            } catch(e) {
+                console.error('❌ Canvas测试失败:', e);
+                const container = document.getElementById('canvas-hash');
+                if (container) {
+                    container.innerHTML = `<div class="fingerprint-item"><span class="fingerprint-label">Canvas错误:</span><span class="fingerprint-value">${e.message}</span></div>`;
+                }
+            }
+        }
+
+        // WebGL 指纹测试
+        function testWebGLFingerprint() {
+            const container = document.getElementById('webgl-info');
+            if (!container) return;
+            
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                
+                if (gl) {
+                    const info = [
+                        ['WebGL版本', gl.getParameter(gl.VERSION)],
+                        ['供应商', gl.getParameter(gl.VENDOR)],
+                        ['渲染器', gl.getParameter(gl.RENDERER)],
+                        ['着色器版本', gl.getParameter(gl.SHADING_LANGUAGE_VERSION)]
+                    ];
+
+                    // WebGL扩展
+                    const extensions = gl.getSupportedExtensions();
+                    info.push(['支持的扩展数量', extensions.length.toString()]);
+
+                    let html = '';
+                    info.forEach(([label, value]) => {
+                        html += `
+                            <div class="fingerprint-item">
+                                <span class="fingerprint-label">${label}:</span>
+                                <span class="fingerprint-value">${value}</span>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = '<div class="fingerprint-item"><span class="fingerprint-label">WebGL状态:</span><span class="fingerprint-value">不支持</span></div>';
+                }
+                console.log('✅ WebGL指纹测试完成');
+            } catch (e) {
+                console.error('❌ WebGL测试失败:', e);
+                container.innerHTML = `<div class="fingerprint-item"><span class="fingerprint-label">WebGL错误:</span><span class="fingerprint-value">${e.message}</span></div>`;
+            }
+        }
+
+        // 音频指纹测试
+        function testAudioFingerprint() {
+            const container = document.getElementById('audio-info');
+            if (!container) return;
+            
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const analyser = audioContext.createAnalyser();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(10000, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                
+                oscillator.connect(analyser);
+                analyser.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start(0);
+                oscillator.stop(audioContext.currentTime + 0.1);
+
+                const info = [
+                    ['音频上下文状态', audioContext.state],
+                    ['采样率', audioContext.sampleRate.toString()],
+                    ['声道数', audioContext.destination.channelCount.toString()]
+                ];
+
+                let html = '';
+                info.forEach(([label, value]) => {
+                    html += `
+                        <div class="fingerprint-item">
+                            <span class="fingerprint-label">${label}:</span>
+                            <span class="fingerprint-value">${value}</span>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+                console.log('✅ 音频指纹测试完成');
+            } catch (e) {
+                console.error('❌ 音频测试失败:', e);
+                container.innerHTML = `<div class="fingerprint-item"><span class="fingerprint-label">音频测试错误:</span><span class="fingerprint-value">${e.message}</span></div>`;
+            }
+        }
+
+        // 网络信息测试
+        function testNetworkInfo() {
+            const container = document.getElementById('network-info');
+            if (!container) return;
+            
+            // 检测WebRTC本地IP泄露
+            const rtcTest = () => {
+                try {
+                    const pc = new RTCPeerConnection({iceServers: []});
+                    pc.createDataChannel('');
+                    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                    
+                    let localIPs = [];
+                    let hasResult = false;
+                    
+                    pc.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            const candidate = event.candidate.candidate;
+                            const ipMatch = candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+                            if (ipMatch && !localIPs.includes(ipMatch[1])) {
+                                localIPs.push(ipMatch[1]);
+                                if (!hasResult) {
+                                    hasResult = true;
+                                    container.innerHTML = `<div class="fingerprint-item"><span class="fingerprint-label">检测到本地IP:</span><span class="fingerprint-value">${ipMatch[1]}</span></div>`;
+                                }
+                            }
+                        }
+                    };
+
+                    setTimeout(() => {
+                        if (!hasResult) {
+                            container.innerHTML = '<div class="fingerprint-item"><span class="fingerprint-label">本地IP泄露:</span><span class="fingerprint-value">已防护 ✅</span></div>';
+                        }
+                        pc.close();
+                    }, 2000);
+                } catch (e) {
+                    container.innerHTML = '<div class="fingerprint-item"><span class="fingerprint-label">WebRTC测试:</span><span class="fingerprint-value">不支持或已禁用 ✅</span></div>';
+                }
+            };
+
+            rtcTest();
+            console.log('✅ 网络信息测试完成');
+        }
+        
+        // 立即执行
+        immediateCheck();
+        
+        // 工具函数：创建指纹项显示
+        function createFingerprintItem(label, value, expected = null) {
+            const div = document.createElement('div');
+            div.className = 'fingerprint-item';
+            
+            let statusClass = 'status-ok';
+            let statusIcon = '✅';
+            
+            if (expected && value !== expected) {
+                statusClass = 'status-warning';
+                statusIcon = '⚠️';
+            }
+            
+            div.innerHTML = `
+                <span class="${statusClass}">${statusIcon}</span>
+                <span class="fingerprint-label">${label}:</span>
+                <span class="fingerprint-value">${value}</span>
+                ${expected ? `<br><small>期望值: ${expected}</small>` : ''}
+            `;
+            return div;
+        }
+
+        // 基础环境信息收集
+        function collectBasicInfo() {
+            const container = document.getElementById('basic-info');
+            
+            const info = [
+                ['User Agent', navigator.userAgent, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'],
+                ['平台', navigator.platform, 'Win32'],
+                ['语言', navigator.language, 'zh-CN'],
+                ['语言列表', navigator.languages.join(','), 'zh-CN,zh,en'],
+                ['时区', Intl.DateTimeFormat().resolvedOptions().timeZone, 'Asia/Shanghai'],
+                ['Cookie启用', navigator.cookieEnabled.toString(), 'true'],
+                ['在线状态', navigator.onLine.toString(), 'true']
+            ];
+
+            if (navigator.hardwareConcurrency) {
+                info.push(['CPU核心数', navigator.hardwareConcurrency.toString(), '8']);
+            }
+
+            if (navigator.deviceMemory) {
+                info.push(['设备内存', navigator.deviceMemory + 'GB', '8GB']);
+            }
+
+            info.forEach(([label, value, expected]) => {
+                container.appendChild(createFingerprintItem(label, value, expected));
+            });
+        }
+
+        // 屏幕信息收集
+        function collectScreenInfo() {
+            const container = document.getElementById('screen-info');
+            
+            const info = [
+                ['屏幕宽度', screen.width.toString(), '1920'],
+                ['屏幕高度', screen.height.toString(), '1080'],
+                ['可用宽度', screen.availWidth.toString(), '1920'],
+                ['可用高度', screen.availHeight.toString(), '1040'],
+                ['颜色深度', screen.colorDepth.toString(), '24'],
+                ['像素深度', screen.pixelDepth.toString(), '24'],
+                ['设备像素比', window.devicePixelRatio.toString(), '1']
+            ];
+
+            info.forEach(([label, value, expected]) => {
+                container.appendChild(createFingerprintItem(label, value, expected));
+            });
+        }
+
+        // Canvas 指纹测试
+        function testCanvasFingerprint() {
+            const canvas = document.getElementById('canvas-test');
+            const ctx = canvas.getContext('2d');
+            
+            // 绘制测试图案
+            ctx.textBaseline = 'top';
+            ctx.font = '14px Arial';
+            ctx.fillStyle = '#f60';
+            ctx.fillRect(125, 1, 62, 20);
+            ctx.fillStyle = '#069';
+            ctx.fillText('🔍Canvas指纹测试', 2, 15);
+            ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+            ctx.fillText('🎨Canvas指纹测试', 4, 17);
+
+            // 获取Canvas数据URL
+            const dataURL = canvas.toDataURL();
+            const hash = btoa(dataURL.slice(-50)); // 简单哈希
+
+            const container = document.getElementById('canvas-hash');
+            container.appendChild(createFingerprintItem('Canvas哈希', hash.slice(0, 20) + '...'));
+            container.appendChild(createFingerprintItem('Canvas长度', dataURL.length.toString()));
+        }
+
+        // WebGL 指纹测试
+        function testWebGLFingerprint() {
+            const container = document.getElementById('webgl-info');
+            
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                
+                if (gl) {
+                    const info = [
+                        ['WebGL版本', gl.getParameter(gl.VERSION), 'WebGL 1.0 (OpenGL ES 2.0 Chromium)'],
+                        ['供应商', gl.getParameter(gl.VENDOR), 'Google Inc. (Intel)'],
+                        ['渲染器', gl.getParameter(gl.RENDERER), 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)'],
+                        ['着色器版本', gl.getParameter(gl.SHADING_LANGUAGE_VERSION), 'WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)']
+                    ];
+
+                    // WebGL扩展
+                    const extensions = gl.getSupportedExtensions();
+                    info.push(['支持的扩展数量', extensions.length.toString()]);
+
+                    info.forEach(([label, value, expected]) => {
+                        container.appendChild(createFingerprintItem(label, value, expected));
+                    });
+                } else {
+                    container.appendChild(createFingerprintItem('WebGL状态', '不支持', null));
+                }
+            } catch (e) {
+                container.appendChild(createFingerprintItem('WebGL错误', e.message, null));
+            }
+        }
+
+        // 音频指纹测试
+        function testAudioFingerprint() {
+            const container = document.getElementById('audio-info');
+            
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const analyser = audioContext.createAnalyser();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(10000, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                
+                oscillator.connect(analyser);
+                analyser.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start(0);
+                oscillator.stop(audioContext.currentTime + 0.1);
+
+                const info = [
+                    ['音频上下文状态', audioContext.state],
+                    ['采样率', audioContext.sampleRate.toString()],
+                    ['声道数', audioContext.destination.channelCount.toString()]
+                ];
+
+                info.forEach(([label, value]) => {
+                    container.appendChild(createFingerprintItem(label, value));
+                });
+            } catch (e) {
+                container.appendChild(createFingerprintItem('音频测试错误', e.message));
+            }
+        }
+
+        // 网络信息测试
+        function testNetworkInfo() {
+            const container = document.getElementById('network-info');
+            
+            // 检测WebRTC本地IP泄露
+            const rtcTest = () => {
+                try {
+                    const pc = new RTCPeerConnection({iceServers: []});
+                    pc.createDataChannel('');
+                    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                    
+                    let localIPs = [];
+                    pc.onicecandidate = (event) => {
+                        if (event.candidate) {
+                            const candidate = event.candidate.candidate;
+                            const ipMatch = candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+                            if (ipMatch && !localIPs.includes(ipMatch[1])) {
+                                localIPs.push(ipMatch[1]);
+                                container.appendChild(createFingerprintItem('检测到本地IP', ipMatch[1]));
+                            }
+                        }
+                    };
+
+                    setTimeout(() => {
+                        if (localIPs.length === 0) {
+                            container.appendChild(createFingerprintItem('本地IP泄露', '已防护 ✅'));
+                        }
+                        pc.close();
+                    }, 2000);
+                } catch (e) {
+                    container.appendChild(createFingerprintItem('WebRTC测试', '不支持或已禁用 ✅'));
+                }
+            };
+
+            rtcTest();
+        }
+
+        // 页面加载完成后执行所有测试
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📋 测试页面开始初始化...');
+            
+            // 🚨 多重延迟机制，确保指纹脚本完全执行
+            
+            // 第1次检查（500ms）
+            setTimeout(function() {
+                console.log('🔍 === 第1次指纹检查 (500ms) ===');
+                logCurrentFingerprint('Check1');
+            }, 500);
+            
+            // 第2次检查（1000ms）
+            setTimeout(function() {
+                console.log('🔍 === 第2次指纹检查 (1000ms) ===');
+                logCurrentFingerprint('Check2');
+            }, 1000);
+            
+            // 第3次检查（2000ms）
+            setTimeout(function() {
+                console.log('🔍 === 第3次指纹检查 (2000ms) ===');
+                logCurrentFingerprint('Check3');
+                
+                // 开始执行测试
+                console.log('🏁 开始执行所有测试...');
+                collectBasicInfo();
+                collectScreenInfo();
+                testCanvasFingerprint();
+                testWebGLFingerprint();
+                testAudioFingerprint();
+                testNetworkInfo();
+                
+                // 最终报告
+                setTimeout(function() {
+                    generateFinalReport();
+                }, 1000);
+                
+                console.log('🎉 所有测试完成！');
+            }, 2000);
+        });
+        
+        // 记录当前指纹情况
+        function logCurrentFingerprint(checkName) {
+            console.log(`--- ${checkName} 指纹状态 ---`);
+            console.log('User-Agent:', navigator.userAgent);
+            console.log('Platform:', navigator.platform);
+            console.log('CPU Cores:', navigator.hardwareConcurrency);
+            console.log('Language:', navigator.language);
+            console.log('Languages:', navigator.languages);
+            console.log('Screen:', screen.width + 'x' + screen.height);
+            
+            // 检查是否有指纹覆盖标记
+            if (window.fingerprintOverridden) {
+                console.log('✅ 指纹覆盖状态: 成功');
+                if (window.fingerprintSuccess) {
+                    console.log('✅ 详细成功状态:', window.fingerprintSuccess);
+                }
+                if (window.fingerprintData) {
+                    console.log('✅ 覆盖数据:', window.fingerprintData);
+                }
+            } else {
+                console.warn('❌ 指纹覆盖状态: 失败或未执行');
+            }
+        }
+        
+        // 生成最终报告
+        function generateFinalReport() {
+            console.log('📋 === 最终指纹伪装报告 ===');
+            
+            const expected = {
+                userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                platform: 'Win32',
+                hardwareConcurrency: 8,
+                language: 'zh-CN',
+                languages: ['zh-CN', 'zh', 'en'],
+                screenWidth: 1920,
+                screenHeight: 1080,
+                devicePixelRatio: 1.0
+            };
+            
+            const actual = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                language: navigator.language,
+                languages: navigator.languages,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                devicePixelRatio: window.devicePixelRatio
+            };
+            
+            const results = {
+                userAgent: actual.userAgent === expected.userAgent,
+                platform: actual.platform === expected.platform,
+                hardwareConcurrency: actual.hardwareConcurrency === expected.hardwareConcurrency,
+                language: actual.language === expected.language,
+                languages: JSON.stringify(actual.languages) === JSON.stringify(expected.languages),
+                screenSize: actual.screenWidth === expected.screenWidth && actual.screenHeight === expected.screenHeight,
+                devicePixelRatio: actual.devicePixelRatio === expected.devicePixelRatio
+            };
+            
+            console.log('🎯 期望值:', expected);
+            console.log('📋 实际值:', actual);
+            console.log('🎆 测试结果:', results);
+            
+            const successCount = Object.values(results).filter(Boolean).length;
+            const totalCount = Object.keys(results).length;
+            const successRate = ((successCount / totalCount) * 100).toFixed(1);
+            
+            console.log(`📊 成功率: ${successCount}/${totalCount} (${successRate}%)`);
+            
+            if (successRate === '100.0') {
+                console.log('🎉 指纹伪装完全成功！');
+            } else {
+                console.warn(`⚠️ 指纹伪装部分成功，成功率: ${successRate}%`);
+                
+                // 输出失败的项目
+                Object.keys(results).forEach(key => {
+                    if (!results[key]) {
+                        console.error(`❌ 失败项目: ${key}`);
+                        console.error(`   期望: ${JSON.stringify(expected[key])}`);
+                        console.error(`   实际: ${JSON.stringify(actual[key])}`);
+                    }
+                });
+            }
+            
+            // 在页面上显示结果
+            displayFinalReport(results, successRate, actual, expected);
+        }
+        
+        // 在页面上显示最终报告
+        function displayFinalReport(results, successRate, actual, expected) {
+            const reportContainer = document.createElement('div');
+            reportContainer.className = 'container section';
+            reportContainer.innerHTML = `
+                <h2>📋 最终指纹伪装报告</h2>
+                <div class="fingerprint-item ${successRate === '100.0' ? 'status-ok' : 'status-warning'}">
+                    <span class="fingerprint-label">成功率:</span>
+                    <span class="fingerprint-value">${successRate}% (${Object.values(results).filter(Boolean).length}/${Object.keys(results).length})</span>
+                </div>
+                <div id="detailed-results"></div>
+            `;
+            
+            const detailedResults = reportContainer.querySelector('#detailed-results');
+            
+            Object.keys(results).forEach(key => {
+                const isSuccess = results[key];
+                const item = document.createElement('div');
+                item.className = `fingerprint-item ${isSuccess ? 'status-ok' : 'status-error'}`;
+                item.innerHTML = `
+                    <span class="${isSuccess ? 'status-ok' : 'status-error'}">${isSuccess ? '✅' : '❌'}</span>
+                    <span class="fingerprint-label">${key}:</span>
+                    <span class="fingerprint-value">${JSON.stringify(actual[key])}</span>
+                    ${!isSuccess ? `<br><small style="color: #f44336;">期望: ${JSON.stringify(expected[key])}</small>` : ''}
+                `;
+                detailedResults.appendChild(item);
+            });
+            
+            document.body.appendChild(reportContainer);
+        }
+    </script>
+</body>
+</html>

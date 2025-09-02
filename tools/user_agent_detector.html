@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User-Agent检测方式分析工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .result-item {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }
+        .result-label {
+            font-weight: bold;
+            color: #555;
+        }
+        .result-value {
+            font-family: monospace;
+            background: #e8e8e8;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            color: #155724;
+        }
+        .danger {
+            background-color: #f8d7da;
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .code-block {
+            background: #f4f4f4;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 User-Agent检测方式分析工具</h1>
+        <p>此工具帮助您分析目标网站使用哪种方式检测User-Agent</p>
+        
+        <div class="section">
+            <button onclick="detectCurrentSite()">分析当前网站</button>
+            <button onclick="testUserAgentMethods()">测试所有检测方法</button>
+            <button onclick="simulateUserAgentChange()">模拟User-Agent更改</button>
+        </div>
+    </div>
+
+    <div class="container section">
+        <h2>📊 检测结果</h2>
+        <div id="detection-results"></div>
+    </div>
+
+    <div class="container section">
+        <h2>📋 当前环境信息</h2>
+        <div id="environment-info"></div>
+    </div>
+
+    <div class="container section">
+        <h2>🧪 网络请求检测</h2>
+        <div id="network-analysis"></div>
+    </div>
+
+    <div class="container section">
+        <h2>📖 分析建议</h2>
+        <div id="recommendations"></div>
+    </div>
+
+    <script>
+        // 当前页面的User-Agent检测分析
+        function detectCurrentSite() {
+            const results = document.getElementById('detection-results');
+            results.innerHTML = '<p>🔍 正在分析当前网站...</p>';
+            
+            setTimeout(() => {
+                const analysis = analyzeUserAgentDetection();
+                displayResults(analysis);
+            }, 1000);
+        }
+
+        // 分析网站的User-Agent检测方式
+        function analyzeUserAgentDetection() {
+            const analysis = {
+                javascript_detection: false,
+                http_header_detection: false,
+                fingerprinting_scripts: [],
+                detection_methods: [],
+                risk_level: 'low'
+            };
+
+            // 检测JavaScript方式
+            if (typeof navigator !== 'undefined' && navigator.userAgent) {
+                analysis.javascript_detection = true;
+                analysis.detection_methods.push('JavaScript navigator.userAgent');
+            }
+
+            // 检测页面中的User-Agent相关代码
+            const pageContent = document.documentElement.outerHTML;
+            const patterns = [
+                /navigator\.userAgent/gi,
+                /userAgent/gi,
+                /User-Agent/gi,
+                /browser.*detect/gi,
+                /fingerprint/gi,
+                /clientHints/gi
+            ];
+
+            patterns.forEach((pattern, index) => {
+                const matches = pageContent.match(pattern);
+                if (matches && matches.length > 0) {
+                    const patternNames = [
+                        'navigator.userAgent调用',
+                        'userAgent变量使用',
+                        'User-Agent字符串检测',
+                        '浏览器检测脚本',
+                        '指纹识别代码',
+                        'Client Hints API'
+                    ];
+                    analysis.fingerprinting_scripts.push({
+                        type: patternNames[index],
+                        count: matches.length
+                    });
+                }
+            });
+
+            // 检测是否有第三方指纹识别服务
+            const thirdPartyServices = [
+                'fingerprintjs',
+                'deviceatlas',
+                'maxmind',
+                'browserhawk',
+                'amplitude',
+                'mixpanel'
+            ];
+
+            thirdPartyServices.forEach(service => {
+                if (pageContent.toLowerCase().includes(service)) {
+                    analysis.fingerprinting_scripts.push({
+                        type: '第三方服务: ' + service,
+                        count: 1
+                    });
+                }
+            });
+
+            // 计算风险等级
+            const totalDetections = analysis.fingerprinting_scripts.length;
+            if (totalDetections > 5) {
+                analysis.risk_level = 'high';
+            } else if (totalDetections > 2) {
+                analysis.risk_level = 'medium';
+            }
+
+            return analysis;
+        }
+
+        // 显示检测结果
+        function displayResults(analysis) {
+            const results = document.getElementById('detection-results');
+            let html = '';
+
+            // JavaScript检测
+            html += `<div class="result-item ${analysis.javascript_detection ? 'success' : 'warning'}">
+                <span class="result-label">JavaScript检测:</span>
+                <span class="result-value">${analysis.javascript_detection ? '✅ 支持' : '❌ 不支持'}</span>
+            </div>`;
+
+            // 检测到的脚本
+            if (analysis.fingerprinting_scripts.length > 0) {
+                html += '<div class="result-item danger">';
+                html += '<span class="result-label">检测到的指纹识别代码:</span><br>';
+                analysis.fingerprinting_scripts.forEach(script => {
+                    html += `<div style="margin-left: 20px;">• ${script.type}: ${script.count}处</div>`;
+                });
+                html += '</div>';
+            }
+
+            // 风险等级
+            const riskClass = analysis.risk_level === 'high' ? 'danger' : 
+                            analysis.risk_level === 'medium' ? 'warning' : 'success';
+            const riskText = analysis.risk_level === 'high' ? '🔴 高风险' :
+                           analysis.risk_level === 'medium' ? '🟡 中等风险' : '🟢 低风险';
+            
+            html += `<div class="result-item ${riskClass}">
+                <span class="result-label">指纹识别风险等级:</span>
+                <span class="result-value">${riskText}</span>
+            </div>`;
+
+            results.innerHTML = html;
+
+            // 生成建议
+            generateRecommendations(analysis);
+        }
+
+        // 生成针对性建议
+        function generateRecommendations(analysis) {
+            const recommendations = document.getElementById('recommendations');
+            let html = '';
+
+            if (analysis.risk_level === 'high') {
+                html += `<div class="result-item danger">
+                    <strong>⚠️ 高风险网站检测建议：</strong><br>
+                    • 该网站使用了多种指纹识别技术<br>
+                    • 建议同时伪装HTTP和JavaScript User-Agent<br>
+                    • 需要使用完整的指纹伪装方案<br>
+                    • 考虑使用代理或VPN增加保护
+                </div>`;
+            } else if (analysis.risk_level === 'medium') {
+                html += `<div class="result-item warning">
+                    <strong>⚠️ 中等风险网站检测建议：</strong><br>
+                    • 主要关注JavaScript User-Agent伪装<br>
+                    • 可能需要额外的浏览器指纹伪装<br>
+                    • 建议测试伪装效果
+                </div>`;
+            } else {
+                html += `<div class="result-item success">
+                    <strong>✅ 低风险网站检测建议：</strong><br>
+                    • JavaScript User-Agent伪装通常足够<br>
+                    • 基础指纹伪装即可满足需求<br>
+                    • 定期验证伪装效果
+                </div>`;
+            }
+
+            // 针对检测到的具体技术给出建议
+            if (analysis.fingerprinting_scripts.some(s => s.type.includes('fingerprintjs'))) {
+                html += `<div class="result-item danger">
+                    <strong>🎯 FingerprintJS检测到：</strong><br>
+                    • 这是专业的指纹识别库<br>
+                    • 需要完整的Canvas、WebGL、音频指纹伪装<br>
+                    • 建议使用您的CEF应用的完整伪装方案
+                </div>`;
+            }
+
+            recommendations.innerHTML = html;
+        }
+
+        // 测试所有User-Agent检测方法
+        function testUserAgentMethods() {
+            const results = document.getElementById('environment-info');
+            
+            const info = {
+                'JavaScript User-Agent': navigator.userAgent,
+                '浏览器名称': navigator.appName,
+                '浏览器版本': navigator.appVersion,
+                '平台信息': navigator.platform,
+                '语言设置': navigator.language,
+                '语言列表': navigator.languages ? navigator.languages.join(', ') : '不支持',
+                'Cookie支持': navigator.cookieEnabled,
+                '在线状态': navigator.onLine,
+                '屏幕分辨率': `${screen.width}x${screen.height}`,
+                '颜色深度': screen.colorDepth,
+                '设备像素比': window.devicePixelRatio,
+                '时区偏移': new Date().getTimezoneOffset(),
+                '当前时区': Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+
+            let html = '';
+            Object.entries(info).forEach(([key, value]) => {
+                html += `<div class="result-item">
+                    <span class="result-label">${key}:</span>
+                    <span class="result-value">${value}</span>
+                </div>`;
+            });
+
+            results.innerHTML = html;
+        }
+
+        // 模拟User-Agent更改测试
+        function simulateUserAgentChange() {
+            const network = document.getElementById('network-analysis');
+            
+            // 创建测试请求
+            network.innerHTML = '<p>🔍 正在测试网络请求中的User-Agent...</p>';
+            
+            // 测试XMLHttpRequest
+            setTimeout(() => {
+                testNetworkRequests();
+            }, 1000);
+        }
+
+        // 测试网络请求
+        function testNetworkRequests() {
+            const network = document.getElementById('network-analysis');
+            let html = '';
+
+            // 测试Fetch API
+            html += `<div class="result-item">
+                <span class="result-label">测试说明:</span><br>
+                <div class="code-block">
+1. HTTP User-Agent: 由浏览器内核自动发送，在网络请求头中
+2. JavaScript User-Agent: 通过navigator.userAgent获取
+3. 服务端检测: 分析服务器日志或响应头
+4. 客户端检测: 通过JavaScript代码检测
+                </div>
+            </div>`;
+
+            html += `<div class="result-item warning">
+                <span class="result-label">检测建议:</span><br>
+                • 使用浏览器开发者工具的Network标签查看请求头<br>
+                • 在Console中运行: <code>navigator.userAgent</code><br>
+                • 对比两者是否一致<br>
+                • 检查网站是否有服务端User-Agent验证
+            </div>`;
+
+            network.innerHTML = html;
+        }
+
+        // 页面加载时自动执行
+        window.addEventListener('DOMContentLoaded', function() {
+            testUserAgentMethods();
+            
+            // 显示使用说明
+            const recommendations = document.getElementById('recommendations');
+            recommendations.innerHTML = `
+                <div class="result-item">
+                    <strong>📖 工具使用说明：</strong><br>
+                    1. 点击"分析当前网站"检测当前页面的User-Agent使用情况<br>
+                    2. 点击"测试所有检测方法"查看当前环境的详细信息<br>
+                    3. 点击"模拟User-Agent更改"了解网络请求检测原理<br>
+                    4. 根据检测结果调整您的CEF应用伪装策略
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>

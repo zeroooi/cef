@@ -1,0 +1,129 @@
+{
+  "basic": {
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "accept_language": "zh-CN,zh;q=0.9,en;q=0.8",
+    "timezone": "Asia/Shanghai",
+    "platform": "Win32",
+    "vendor": "Google Inc.",
+    "product": "Gecko"
+  },
+  "screen": {
+    "width": 1920,
+    "height": 1080,
+    "avail_width": 1920,
+    "avail_height": 1040,
+    "color_depth": 24,
+    "pixel_depth": 24,
+    "device_pixel_ratio": 1.0
+  },
+  "hardware": {
+    "cpu_cores": 8,
+    "device_memory": 8,
+    "max_touch_points": 0,
+    "vendor_sub": "",
+    "product_sub": "20030107"
+  },
+  "canvas": {
+    "enable_noise": false,
+    "noise_level": 0.05,
+    "block_toDataURL": false
+  },
+  "webgl": {
+    "vendor": "Google Inc. (Intel)",
+    "renderer": "ANGLE (Intel, Intel(R) HD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "version": "WebGL 1.0 (OpenGL ES 2.0 Chromium)",
+    "shading_language_version": "WebGL GLSL ES 1.0 (OpenGL ES GLSL ES 1.0 Chromium)",
+    "extensions": [
+      "ANGLE_instanced_arrays",
+      "EXT_blend_minmax",
+      "EXT_color_buffer_half_float",
+      "EXT_disjoint_timer_query",
+      "EXT_frag_depth",
+      "EXT_shader_texture_lod",
+      "EXT_texture_filter_anisotropic",
+      "WEBKIT_EXT_texture_filter_anisotropic",
+      "EXT_sRGB",
+      "OES_element_index_uint",
+      "OES_standard_derivatives",
+      "OES_texture_float",
+      "OES_texture_float_linear",
+      "OES_texture_half_float",
+      "OES_texture_half_float_linear",
+      "OES_vertex_array_object",
+      "WEBGL_color_buffer_float",
+      "WEBGL_compressed_texture_s3tc",
+      "WEBKIT_WEBGL_compressed_texture_s3tc",
+      "WEBGL_debug_renderer_info",
+      "WEBGL_debug_shaders",
+      "WEBGL_depth_texture",
+      "WEBKIT_WEBGL_depth_texture",
+      "WEBGL_draw_buffers",
+      "WEBGL_lose_context",
+      "WEBKIT_WEBGL_lose_context"
+    ]
+  },
+  "fonts": {
+    "available_fonts": [
+      "Arial", "Arial Black", "Calibri", "Cambria", "Comic Sans MS", "Consolas", "Courier New",
+      "Georgia", "Helvetica", "Impact", "Lucida Console", "Microsoft Sans Serif", 
+      "Segoe UI", "Tahoma", "Times New Roman", "Trebuchet MS", "Verdana", 
+      "Microsoft YaHei", "SimSun"
+    ],
+    "font_randomization": false
+  },
+  "audio": {
+    "enable_noise": false,
+    "noise_level": 0.0001
+  },
+  "webrtc": {
+    "block_local_ip_leak": true,
+    "fake_public_ip": "8.8.8.8",
+    "block_data_channels": false
+  },
+  "plugins": {
+    "enabled": [
+      {
+        "name": "Chrome PDF Plugin",
+        "filename": "internal-pdf-viewer",
+        "description": "Portable Document Format"
+      },
+      {
+        "name": "Chrome PDF Viewer", 
+        "filename": "mhjfbmdgcfjbbpaeojofohoefgiehjai",
+        "description": ""
+      },
+      {
+        "name": "Native Client",
+        "filename": "internal-nacl-plugin",
+        "description": ""
+      }
+    ]
+  },
+  "media_devices": {
+    "enumerate_devices_noise": true
+  },
+  "permissions": {
+    "notifications": "default",
+    "geolocation": "default", 
+    "camera": "default",
+    "microphone": "default"
+  },
+  "app": {
+    "default_url": "https://amiunique.org",
+    "window_title": "安全浏览器"
+  },
+  "headers": {
+    "sec_ch_ua": "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"",
+    "sec_ch_ua_mobile": "?0",
+    "sec_ch_ua_platform": "\"Windows\"",
+    "sec_ch_ua_full_version_list": "\"Not_A Brand\";v=\"8.0.0.0\", \"Chromium\";v=\"120.0.0.0\", \"Google Chrome\";v=\"120.0.0.0\"",
+    "sec_ch_ua_arch": "\"x86\"",
+    "sec_ch_ua_bitness": "\"64\"",
+    "sec_fetch_dest": "empty",
+    "sec_fetch_mode": "cors",
+    "sec_fetch_site": "same-origin",
+    "cache_control": "no-cache",
+    "pragma": "no-cache",
+    "x_sw_cache": "7"
+  }
+}
