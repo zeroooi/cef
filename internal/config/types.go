@@ -112,6 +112,13 @@ type BrowserConfig struct {
 		Pragma                 string `json:"pragma"`
 		XSwCache               string `json:"x_sw_cache"`
 	} `json:"headers"`
+
+	Proxy struct {
+		Mode     string `json:"mode,omitempty"`
+		Url      string `json:"url,omitempty"`
+		Username string `json:"username,omitempty"`
+		Password string `json:"password,omitempty"`
+	} `json:"proxy"`
 }
 
 // WhitelistConfig 网站白名单配置结构

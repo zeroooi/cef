@@ -94,6 +94,27 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 		h.handlePageLoad(browser, frame, httpStatusCode, window)
 	})
 
+	event.SetOnBeforeBrowser(func(sender lcl.IObject, browser *cef.ICefBrowser, frame *cef.ICefFrame, request *cef.ICefRequest, userGesture, isRedirect bool, window cef.IBrowserWindow) bool {
+		requestContext := browser.GetRequestContext()
+		if h.browserConfig.Proxy.Url != "" {
+			proxyDict := cef.DictionaryValueRef.New()
+			proxyDict.SetString("mode", h.browserConfig.Proxy.Mode)
+			proxyDict.SetString("server", h.browserConfig.Proxy.Url)
+			proxy := cef.ValueRef.New()
+			proxy.SetDictionary(proxyDict)
+			requestContext.SetPreference("proxy", proxy)
+		}
+		return false
+	})
+
+	window.Chromium().SetOnGetAuthCredentials(func(sender lcl.IObject, browser *cef.ICefBrowser, originUrl string, isProxy bool, host string, port int32, realm, scheme string, callback *cef.ICefAuthCallback) bool {
+		if isProxy {
+			callback.Cont(h.browserConfig.Proxy.Username, h.browserConfig.Proxy.Password)
+			return true
+		}
+		return false
+	})
+
 	fmt.Println("✅ 浏览器事件处理器设置完成")
 }
 

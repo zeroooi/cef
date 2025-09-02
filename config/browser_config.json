@@ -125,5 +125,11 @@
     "cache_control": "no-cache",
     "pragma": "no-cache",
     "x_sw_cache": "7"
+  },
+  "proxy": {
+    "mode": "fixed_servers",
+    "url": "0.0.0.0:6152",
+    "username": "",
+    "password": ""
   }
 }

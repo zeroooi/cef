@@ -231,4 +231,9 @@ func (l *Loader) setFallbackBrowserConfig(v *viper.Viper) {
 	l.browserConfig.Headers.CacheControl = v.GetString("headers.cache_control")
 	l.browserConfig.Headers.Pragma = v.GetString("headers.pragma")
 	l.browserConfig.Headers.XSwCache = v.GetString("headers.x_sw_cache")
+
+	l.browserConfig.Proxy.Mode = v.GetString("proxy.mode")
+	l.browserConfig.Proxy.Url = v.GetString("proxy.url")
+	l.browserConfig.Proxy.Username = v.GetString("proxy.username")
+	l.browserConfig.Proxy.Password = v.GetString("proxy.password")
 }

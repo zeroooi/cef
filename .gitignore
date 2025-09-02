@@ -10,3 +10,4 @@ Logs
 go.sum
 .DS_Store
 /.vscode
+/releases
