@@ -92,6 +92,21 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 	// 当浏览器页面加载完成后会触发此事件
 	event.SetOnLoadEnd(func(sender lcl.IObject, browser *cef.ICefBrowser, frame *cef.ICefFrame, httpStatusCode int32, window cef.IBrowserWindow) {
 		h.handlePageLoad(browser, frame, httpStatusCode, window)
+		if h.browserConfig.Proxy.Debug {
+			window.Chromium().ExecuteJavaScript(`fetch('https://ifconfig.io/ip')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(data => {
+        console.log(data);
+    })
+    .catch(error => {
+        console.error('There has been a problem with your fetch operation:', error);
+    });`, "", frame, 0)
+		}
 	})
 
 	event.SetOnBeforeBrowser(func(sender lcl.IObject, browser *cef.ICefBrowser, frame *cef.ICefFrame, request *cef.ICefRequest, userGesture, isRedirect bool, window cef.IBrowserWindow) bool {

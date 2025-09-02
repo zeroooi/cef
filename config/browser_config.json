@@ -130,6 +130,7 @@
     "mode": "fixed_servers",
     "url": "0.0.0.0:6152",
     "username": "",
-    "password": ""
+    "password": "",
+    "debug": true
   }
 }

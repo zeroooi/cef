@@ -236,4 +236,5 @@ func (l *Loader) setFallbackBrowserConfig(v *viper.Viper) {
 	l.browserConfig.Proxy.Url = v.GetString("proxy.url")
 	l.browserConfig.Proxy.Username = v.GetString("proxy.username")
 	l.browserConfig.Proxy.Password = v.GetString("proxy.password")
+	l.browserConfig.Proxy.Debug = v.GetBool("proxy.debug")
 }

@@ -118,6 +118,7 @@ type BrowserConfig struct {
 		Url      string `json:"url,omitempty"`
 		Username string `json:"username,omitempty"`
 		Password string `json:"password,omitempty"`
+		Debug    bool   `json:"debug,omitempty"`
 	} `json:"proxy"`
 }
 
