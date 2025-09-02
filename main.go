@@ -22,14 +22,12 @@ var resources embed.FS
 
 // 应用程序主入口函数
 func main() {
-	log.Println("🚀 启动受控浏览器应用...")
-
 	// 1. 加载配置文件
 	configLoader := config.NewLoader()
 	if err := configLoader.LoadAll(); err != nil {
 		log.Fatalf("❌ 配置加载失败: %v", err)
 	}
-	log.Println("✅ 配置加载成功")
+	log.Println("配置加载成功")
 
 	// 获取配置实例
 	browserConfig := configLoader.GetBrowserConfig()
@@ -37,18 +35,18 @@ func main() {
 
 	// 2. 初始化安全控制模块
 	whitelistValidator := security.NewWhitelistValidator(whitelistConfig)
-	log.Println("✅ 安全控制模块初始化完成")
+	log.Println("安全控制模块初始化完成")
 
 	// 3. 初始化指纹伪装模块
 	scriptManager := fingerprint.NewScriptManager(&resources)
 	if err := scriptManager.LoadFingerprintScript(); err != nil {
-		log.Printf("⚠️  警告：静态指纹脚本加载失败，将仅使用动态脚本: %v", err)
+		log.Printf(" 警告：静态指纹脚本加载失败，将仅使用动态脚本: %v", err)
 	} else {
-		log.Println("✅ 指纹伪装脚本加载成功")
+		log.Println("指纹伪装脚本加载成功")
 	}
 
 	scriptGenerator := fingerprint.NewGenerator(browserConfig)
-	log.Println("✅ 指纹伪装模块初始化完成")
+	log.Println("指纹伪装模块初始化完成")
 
 	// 4. 初始化浏览器事件处理器
 	eventHandler := browser.NewEventHandler(
@@ -57,18 +55,18 @@ func main() {
 		scriptManager,
 		scriptGenerator,
 	)
-	log.Println("✅ 浏览器事件处理器初始化完成")
+	log.Println("浏览器事件处理器初始化完成")
 
 	// 5. 初始化浏览器
 	browserInit := browser.NewInitializer(&resources, browserConfig, eventHandler)
 
-	log.Println("🌎 正在初始化 CEF 浏览器...")
+	log.Println("正在初始化 CEF 浏览器...")
 	// 初始化CEF框架（只能调用一次）
 	cef.GlobalInit(nil, &resources)
 
 	app := browserInit.Initialize()
 
-	log.Println("🚀 启动 CEF 应用...")
+	log.Println("启动 CEF 应用...")
 	// 6. 启动并运行应用程序
 	// 这会阻塞主线程直到应用程序退出
 	cef.Run(app)

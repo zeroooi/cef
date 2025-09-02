@@ -162,7 +162,7 @@ func (h *EventHandler) handlePageLoad(browser *cef.ICefBrowser, frame *cef.ICefF
 	currentURL := frame.Url()
 
 	// 输出调试信息帮助定位问题
-	fmt.Printf("📄 页面加载事件 - URL: %s, 状态码: %d\n", currentURL, httpStatusCode)
+	fmt.Printf("页面加载事件 - URL: %s, 状态码: %d\n", currentURL, httpStatusCode)
 
 	// 检查URL是否被允许访问（优先检查，避免不必要的脚本注入）
 	if currentURL != "" && currentURL != "about:blank" && !h.whitelistValidator.IsURLAllowed(currentURL) {
@@ -171,13 +171,13 @@ func (h *EventHandler) handlePageLoad(browser *cef.ICefBrowser, frame *cef.ICefF
 	}
 
 	// 仅对允许的URL进行指纹注入
-	fmt.Printf("🎉 开始注入指纹脚本 - URL: %s\n", currentURL)
+	fmt.Printf("开始注入指纹脚本 - URL: %s\n", currentURL)
 	h.injectFingerprintScripts(browser)
 
 	// 延迟补强注入（仅一次）
 	go func() {
 		time.Sleep(200 * time.Millisecond)
-		fmt.Printf("🔄 延迟补强注入 - URL: %s\n", currentURL)
+		fmt.Printf("延迟补强注入 - URL: %s\n", currentURL)
 		h.injectFingerprintScripts(browser)
 	}()
 
@@ -218,19 +218,19 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 	headersFixScript := h.scriptManager.GetHeadersFixScript()
 	if headersFixScript != "" {
 		browser.MainFrame().ExecuteJavaScript(headersFixScript, "", 0)
-		fmt.Printf("✅ HTTP头部伪装已启用\n")
+		fmt.Printf("HTTP头部伪装已启用\n")
 	}
 
 	// 注入WebSocket修复脚本
 	websocketFixScript := h.scriptManager.GetWebSocketFixScript()
 	if websocketFixScript != "" {
 		browser.MainFrame().ExecuteJavaScript(websocketFixScript, "", 0)
-		fmt.Printf("✅ WebSocket优雅错误处理已启用\n")
+		fmt.Printf("WebSocket优雅错误处理已启用\n")
 	}
 
 	// 注入CORS禁用脚本（在指纹脚本之前）
 	corsScript := `
-		console.log('🔒 开始设置 CORS 禁用...');
+		console.log('开始设置 CORS 禁用...');
 		
 		// 禁用 Fetch CORS 检查
 		if (window.fetch) {
@@ -239,7 +239,7 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 				options.mode = 'cors';
 				options.credentials = 'include';
 				return originalFetch(url, options).catch(error => {
-					console.log('🔍 Fetch CORS 错误已被忽略:', error);
+					console.log('Fetch CORS 错误已被忽略:', error);
 					return new Response('{}', { status: 200, statusText: 'OK' });
 				});
 			};
@@ -249,7 +249,7 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 		if (window.WebSocket) {
 			const OriginalWebSocket = window.WebSocket;
 			window.WebSocket = function(url, protocols) {
-				console.log('🌐 WebSocket 连接请求:', url);
+				console.log('WebSocket 连接请求:', url);
 				
 				// 创建增强的WebSocket实例
 				const ws = new OriginalWebSocket(url, protocols);
@@ -257,14 +257,14 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 				// 增强错误处理
 				const originalOnError = ws.onerror;
 				ws.onerror = function(event) {
-					console.warn('⚠️ WebSocket 连接失败，尝试恢复...', event);
+					console.warn('WebSocket 连接失败，尝试恢复...', event);
 					if (originalOnError) originalOnError.call(this, event);
 				};
 				
 				// 成功连接日志
 				const originalOnOpen = ws.onopen;
 				ws.onopen = function(event) {
-					console.log('✅ WebSocket 连接成功:', url);
+					console.log('WebSocket 连接成功:', url);
 					if (originalOnOpen) originalOnOpen.call(this, event);
 				};
 				
@@ -279,7 +279,7 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 			window.WebSocket.CLOSED = OriginalWebSocket.CLOSED;
 		}
 		
-		console.log('✅ CORS 禁用和 WebSocket 增强设置完成');
+		console.log('CORS 禁用和 WebSocket 增强设置完成');
 	`
 	browser.MainFrame().ExecuteJavaScript(corsScript, "", 0)
 
@@ -297,7 +297,7 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 	advancedScript := h.scriptGenerator.GenerateAdvancedScript()
 	browser.MainFrame().ExecuteJavaScript(advancedScript, "", 0)
 
-	fmt.Printf("✅ 指纹伪装、CORS禁用、WebSocket优雅处理和HTTP头部伪装已应用\n")
+	fmt.Printf("指纹伪装、CORS禁用、WebSocket优雅处理和HTTP头部伪装已应用\n")
 }
 
 // sendSystemInfo 发送系统信息到前端

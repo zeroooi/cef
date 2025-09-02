@@ -89,8 +89,6 @@
         // ========== 插件和权限伪装 ==========
         
         // 跳过插件列表伪装，因为navigator.plugins属性不可重新定义
-        console.log('📋 跳过插件列表伪装（属性不可配置，避免TypeError）');
-        
         // 伪装MIME类型
         try {
             Object.defineProperty(navigator, 'mimeTypes', {
@@ -101,9 +99,8 @@
                 }),
                 configurable: true
             });
-            console.log('✅ MIME类型伪装完成');
         } catch(mimeError) {
-            console.warn('⚠️ MIME类型伪装失败:', mimeError.message);
+            console.warn('MIME类型伪装失败:', mimeError.message);
         }
         
         console.log('插件和权限伪装完成（跳过了不可配置的plugins属性）');

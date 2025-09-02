@@ -23,8 +23,6 @@ func NewGenerator(browserConfig *config.BrowserConfig) *Generator {
 // GenerateBasicScript 根据配置文件参数创建完整的浏览器指纹伪装脚本
 func (g *Generator) GenerateBasicScript() string {
 	return `
-// 🚨 系统性问题修复版指纹伪装脚本
-console.log('🚨 系统性问题修复版指纹伪装启动...', new Date().toISOString());
 
 // 立即设置初始状态，避免时序问题
 window.fingerprintOverridden = false;
@@ -48,7 +46,7 @@ if (!window.__fingerprintConfig) {
 
 // 系统性指纹伪装 - 确保完全生效
 try {
-    console.log('🔥 开始系统性指纹伪装...');
+    console.log('开始系统性指纹伪装...');
     
     // === 立即覆盖Navigator属性，确保早期生效 ===
     const navigatorOverrides = {
@@ -75,9 +73,8 @@ try {
                 enumerable: true,
                 configurable: true
             });
-            console.log('✅ ' + prop + ' 双重覆盖成功');
         } catch(e) {
-            console.warn('⚠️ ' + prop + ' 覆盖失败:', e.message);
+            console.warn(prop + ' 覆盖失败:', e.message);
         }
     });
     
@@ -96,15 +93,15 @@ try {
         try {
             Object.defineProperty(screen, prop, {
                 get: function() {
-                    console.log('🎯 screen.' + prop + ' 返回固定值:', value);
+                    console.log('screen.' + prop + ' 返回固定值:', value);
                     return value;
                 },
                 enumerable: true,
                 configurable: true
             });
-            console.log('✅ screen.' + prop + ' 覆盖成功，值:', value);
+            console.log('screen.' + prop + ' 覆盖成功，值:', value);
         } catch(e) {
-            console.warn('⚠️ screen.' + prop + ' 覆盖失败:', e.message);
+            console.warn('screen.' + prop + ' 覆盖失败:', e.message);
         }
     });
     
@@ -118,33 +115,33 @@ try {
     try {
         Object.defineProperty(window, 'devicePixelRatio', {
             get: function() {
-                console.log('🎯 devicePixelRatio 返回固定值:', ` + fmt.Sprintf("%.1f", g.browserConfig.Screen.DevicePixelRatio) + `);
+                console.log('devicePixelRatio 返回固定值:', ` + fmt.Sprintf("%.1f", g.browserConfig.Screen.DevicePixelRatio) + `);
                 return ` + fmt.Sprintf("%.1f", g.browserConfig.Screen.DevicePixelRatio) + `;
             },
             enumerable: true,
             configurable: true
         });
-        console.log('✅ devicePixelRatio 覆盖成功，值:', ` + fmt.Sprintf("%.1f", g.browserConfig.Screen.DevicePixelRatio) + `);
+        console.log('devicePixelRatio 覆盖成功，值:', ` + fmt.Sprintf("%.1f", g.browserConfig.Screen.DevicePixelRatio) + `);
     } catch(e) {
-        console.warn('⚠️ devicePixelRatio 覆盖失败:', e.message);
+        console.warn('devicePixelRatio 覆盖失败:', e.message);
     }
     
-    console.log('✅ 系统性指纹伪装完成');
+    console.log('系统性指纹伪装完成');
     
 } catch(e) {
-    console.error('❌ 系统性指纹伪装失败:', e);
+    console.error('系统性指纹伪装失败:', e);
 }
 
 // 立即验证并设置状态，避免时序问题
 function immediateValidation() {
     // 专门针对AmIUnique网站的调试
     if (window.location.hostname === 'amiunique.org') {
-        console.log('🔍 AmIUnique网站检测 - 验证语言设置');
+        console.log('AmIUnique网站检测 - 验证语言设置');
         console.log('  navigator.language:', navigator.language);
         console.log('  navigator.languages:', navigator.languages);
     }
     
-    console.log('🔍 === 立即验证（解决时序问题）===');
+    console.log(' === 立即验证（解决时序问题）===');
     
     // 测试页面期望值
     const expected = {
@@ -181,9 +178,9 @@ function immediateValidation() {
         devicePixelRatio: actual.devicePixelRatio === expected.devicePixelRatio
     };
     
-    console.log('🎯 期望值:', expected);
-    console.log('📋 实际值:', actual);
-    console.log('🎆 验证结果:', results);
+    console.log(' 期望值:', expected);
+    console.log(' 实际值:', actual);
+    console.log(' 验证结果:', results);
     
     const allSuccess = Object.values(results).every(Boolean);
     const successCount = Object.values(results).filter(Boolean).length;
@@ -200,7 +197,7 @@ function immediateValidation() {
     } else {
         // 备用方案，直接使用配置值
         calculatedScreenSize = ` + fmt.Sprintf("%d", g.browserConfig.Screen.Width) + ` + 'x' + ` + fmt.Sprintf("%d", g.browserConfig.Screen.Height) + `;
-        console.warn('⚠️ screen属性未正确覆盖，使用备用screenSize:', calculatedScreenSize);
+        console.warn(' screen属性未正确覆盖，使用备用screenSize:', calculatedScreenSize);
     }
     
     window.fingerprintData = {
@@ -215,18 +212,18 @@ function immediateValidation() {
         devicePixelRatio: actual.devicePixelRatio
     };
     
-    console.log('📋 最终fingerprintData:', window.fingerprintData);
+    console.log(' 最终fingerprintData:', window.fingerprintData);
     
-    console.log('📊 成功率: ' + successCount + '/' + Object.keys(results).length + ' (' + successRate + '%)');
-    console.log('🎯 fingerprintOverridden 设置为:', allSuccess);
+    console.log(' 成功率: ' + successCount + '/' + Object.keys(results).length + ' (' + successRate + '%)');
+    console.log(' fingerprintOverridden 设置为:', allSuccess);
     
     if (allSuccess) {
-        console.log('🎉 系统性修复成功！所有问题已解决！');
+        console.log(' 系统性修复成功！所有问题已解决！');
     } else {
-        console.warn('⚠️ 系统性修复部分失败:');
+        console.warn(' 系统性修复部分失败:');
         Object.keys(results).forEach(key => {
             if (!results[key]) {
-                console.error('❌ 失败项目: ' + key);
+                console.error(' 失败项目: ' + key);
                 console.error('   期望: ' + JSON.stringify(expected[key]));
                 console.error('   实际: ' + JSON.stringify(actual[key]));
             }
@@ -241,7 +238,7 @@ immediateValidation();
 setTimeout(immediateValidation, 10);
 setTimeout(immediateValidation, 50);
 
-console.log('🚀 系统性问题修复版指纹伪装脚本加载完成');
+console.log(' 系统性问题修复版指纹伪装脚本加载完成');
 `
 }
 
@@ -249,11 +246,6 @@ console.log('🚀 系统性问题修复版指纹伪装脚本加载完成');
 func (g *Generator) GenerateAdvancedScript() string {
 	return `
 (function() {
-    console.log('开始应用高级指纹伪装...');
-    
-    // 跳过插件列表伪装，因为它通常不可重新定义
-    console.log('📋 跳过插件列表伪装（属性不可配置）');
-    
     // ========== Canvas指纹伪装 ==========
     if (` + fmt.Sprintf("%v", g.browserConfig.Canvas.EnableNoise) + `) {
         try {
@@ -298,9 +290,7 @@ func (g *Generator) GenerateAdvancedScript() string {
     }
     
     // ========== WebGL指纹伪装 ==========
-    try {
-        console.log('🎯 开始WebGL指纹伪装...');
-        
+    try { 
         // WebGL常量（直接使用数字值）
         const VENDOR = 0x1F00;
         const RENDERER = 0x1F01;
@@ -314,9 +304,7 @@ func (g *Generator) GenerateAdvancedScript() string {
             [VERSION]: '` + g.browserConfig.WebGL.Version + `',
             [SHADING_LANGUAGE_VERSION]: '` + g.browserConfig.WebGL.ShadingLanguageVersion + `'
         };
-        
-        console.log('🎯 目标WebGL配置:', webglConfig);
-        
+         
         // 保存原始方法
         const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
         
@@ -328,7 +316,6 @@ func (g *Generator) GenerateAdvancedScript() string {
                 // 检查是否是我们要伪装的参数
                 if (webglConfig.hasOwnProperty(parameter)) {
                     const fakeValue = webglConfig[parameter];
-                    console.log('🎯 返回伪装值:', fakeValue);
                     return fakeValue;
                 }
                 
@@ -338,7 +325,6 @@ func (g *Generator) GenerateAdvancedScript() string {
                     console.log('🔍 原始参数', parameter, '返回:', result);
                     return result;
                 } catch(e) {
-                    console.error('❌ 调用原始getParameter失败:', e);
                     return null;
                 }
             };
@@ -354,13 +340,11 @@ func (g *Generator) GenerateAdvancedScript() string {
                 }
                 return originalGetParameter.call(this, parameter);
             };
-            console.log('✅ WebGL 1.0 getParameter已覆盖');
         }
         
         // 覆盖WebGL 2.0
         if (typeof WebGL2RenderingContext !== 'undefined') {
             WebGL2RenderingContext.prototype.getParameter = WebGLRenderingContext.prototype.getParameter;
-            console.log('✅ WebGL 2.0 getParameter已覆盖');
         }
         
         // 立即测试
@@ -375,17 +359,16 @@ func (g *Generator) GenerateAdvancedScript() string {
                     console.log('  VERSION (0x1F02):', gl.getParameter(0x1F02));
                     console.log('  SHADING_LANGUAGE_VERSION (0x8B8C):', gl.getParameter(0x8B8C));
                 } else {
-                    console.warn('⚠️ 无法创建WebGL上下文进行测试');
                 }
             } catch(testError) {
-                console.error('❌ WebGL测试失败:', testError);
+                console.error('WebGL测试失败:', testError);
             }
         }, 10);
         
         console.log('✅ WebGL指纹伪装完成');
         
     } catch(e) {
-        console.error('❌ WebGL伪装失败:', e);
+        console.error(' WebGL伪装失败:', e);
         console.error('错误堆栈:', e.stack);
     }
     
@@ -442,17 +425,13 @@ func (g *Generator) GenerateAdvancedScript() string {
         const OriginalWebSocket = window.WebSocket;
         
         // 创建增强WebSocket构造函数
-        window.WebSocket = function(url, protocols) {
-            console.log('🌍 WebSocket连接请求:', url);
-            
+        window.WebSocket = function(url, protocols) { 
             // 创建原始WebSocket实例
             const ws = new OriginalWebSocket(url, protocols);
             
             // 添加错误处理和重连机制
             const originalOnError = ws.onerror;
             ws.onerror = function(event) {
-                console.warn('⚠️ WebSocket连接错误:', event);
-                console.log('🔄 尝试WebSocket错误恢复...');
                 
                 // 调用原始错误处理函数
                 if (originalOnError) {
@@ -463,7 +442,6 @@ func (g *Generator) GenerateAdvancedScript() string {
             // 添加连接成功日志
             const originalOnOpen = ws.onopen;
             ws.onopen = function(event) {
-                console.log('✅ WebSocket连接成功:', url);
                 if (originalOnOpen) {
                     originalOnOpen.call(this, event);
                 }

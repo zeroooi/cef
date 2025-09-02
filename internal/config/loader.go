@@ -3,6 +3,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/spf13/viper"
@@ -50,13 +51,10 @@ func (l *Loader) LoadBrowserConfig() error {
 
 	// 先读取配置文件，再设置默认值
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundError) {
 			// 配置文件不存在，使用默认值
 			fmt.Printf("浏览器配置文件不存在，使用默认配置: %v\n", err)
-			l.setDefaultBrowserConfig(v)
-		} else {
-			// 配置文件存在但解析失败
-			fmt.Printf("解析浏览器配置文件失败，使用默认配置: %v\n", err)
 			l.setDefaultBrowserConfig(v)
 		}
 	} else {
@@ -92,12 +90,10 @@ func (l *Loader) LoadWhitelistConfig() error {
 
 	// 读取配置文件
 	if err := v.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var configFileNotFoundError viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFoundError) {
 			// 配置文件不存在，使用默认值
 			fmt.Printf("白名单配置文件不存在，使用默认配置: %v\n", err)
-		} else {
-			// 配置文件存在但解析失败
-			fmt.Printf("解析白名单配置文件失败，使用默认配置: %v\n", err)
 		}
 	} else {
 		fmt.Println("成功加载白名单配置文件")

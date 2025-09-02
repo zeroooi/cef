@@ -21,9 +21,7 @@
     } else if (userAgentString.indexOf('iPhone') !== -1 || userAgentString.indexOf('iPad') !== -1) {
         platformValue = '"iOS"';
     }
-    
-    console.log('🔧 从 User-Agent 提取的平台值:', platformValue);
-    
+
     // 强制设置 navigator.platform 以确保与 User-Agent 一致
     const platformRaw = platformValue.replace(/"/g, '');
     let navigatorPlatform = 'Win32';
@@ -46,9 +44,8 @@
                 return navigatorPlatform;
             }
         });
-        console.log('✅ navigator.platform 已设置为:', navigatorPlatform);
     } catch (e) {
-        console.warn('⚠️ 无法覆盖 navigator.platform:', e);
+        console.warn(' 无法覆盖 navigator.platform:', e);
     }
     
     // 智能头部配置 - 只设置JavaScript层可以有效控制的头部
@@ -66,10 +63,7 @@
         'sec-ch-ua-platform',  // CEF层根据User-Agent动态设置
         'user-agent'           // CEF层设置，避免冲突
     ];
-    
-    console.log('📋 JavaScript控制的头部:', Object.keys(jsControlledHeaders));
-    console.log('🔒 CEF控制的头部（跳过）:', cefControlledHeaders);
-    
+
     // ===== 强制覆盖头部方法 =====
     
     // 1. 智能检查函数 - 避免重复设置CEF控制的头部
@@ -85,7 +79,6 @@
         
         // 跳过CEF控制的头部，避免冲突
         if (shouldSkipHeader(name)) {
-            console.log(`🔒 跳过CEF控制的头部 ${name}，避免重复设置`);
             return; // 不调用原始方法
         }
         
@@ -102,13 +95,11 @@
             this._method = method;
             this._url = url;
             this._requestHeaders = {};
-            console.log(`🌐 拦截到XHR请求: ${method} ${url}`);
             return originalOpen.apply(this, arguments);
         };
         
         XMLHttpRequest.prototype.send = function(data) {
-            console.log(`📤 发送XHR请求，智能添加JavaScript控制的头部...`);
-            
+
             // 只添加JavaScript层控制的头部，避免与CEF重复
             Object.keys(jsControlledHeaders).forEach(headerName => {
                 if (!shouldSkipHeader(headerName)) {
@@ -125,24 +116,21 @@
                         
                         if (shouldSet) {
                             this.setRequestHeader(headerName, targetValue);
-                            console.log(`✅ JS层添加头部 ${headerName}: ${targetValue}`);
-                            
+
                             // 记录已设置的头部
                             if (!this._requestHeaders) this._requestHeaders = {};
                             this._requestHeaders[headerName.toLowerCase()] = targetValue;
                         }
                     } catch (e) {
-                        console.warn(`⚠️ 无法设置头部 ${headerName}:`, e);
+                        console.warn(`无法设置头部 ${headerName}:`, e);
                     }
                 } else {
-                    console.log(`🔒 跳过CEF控制的头部 ${headerName}`);
+                    console.log(` 跳过CEF控制的头部 ${headerName}`);
                 }
             });
             
             return originalSend.apply(this, arguments);
         };
-        
-        console.log('✅ XMLHttpRequest头部拦截已设置');
     }
     
     // 3. 拦截Fetch API
@@ -150,8 +138,6 @@
         const originalFetch = window.fetch;
         
         window.fetch = function(url, options = {}) {
-            console.log(`🌐 拦截到Fetch请求: ${typeof url === 'object' ? url.url : url}`);
-            
             // 确保options和headers对象存在
             options = options || {};
             options.headers = options.headers || {};
@@ -181,12 +167,12 @@
                     if (!existingHeader) {
                         const targetValue = jsControlledHeaders[headerName];
                         headersObj[headerName] = targetValue;
-                        console.log(`✅ Fetch添加JS控制的头部 ${headerName}: ${targetValue}`);
+                        console.log(` Fetch添加JS控制的头部 ${headerName}: ${targetValue}`);
                     } else {
-                        console.log(`🔍 Fetch跳过已存在的头部 ${headerName}: ${headersObj[existingHeader]}`);
+                        console.log(` Fetch跳过已存在的头部 ${headerName}: ${headersObj[existingHeader]}`);
                     }
                 } else {
-                    console.log(`🔒 Fetch跳过CEF控制的头部 ${headerName}`);
+                    console.log(` Fetch跳过CEF控制的头部 ${headerName}`);
                 }
             });
             
@@ -196,7 +182,7 @@
             return originalFetch.call(this, url, options);
         };
         
-        console.log('✅ Fetch API头部拦截已设置');
+        console.log(' Fetch API头部拦截已设置');
     }
     
     // 4. 模拟navigator.userAgentData (Chrome 90+特性)
@@ -230,7 +216,6 @@
             configurable: true
         });
         
-        console.log('✅ navigator.userAgentData已模拟，平台设置为:', platformName);
     } else {
         // 如果已存在，尝试覆盖其平台值
         try {
@@ -258,9 +243,9 @@
                 }
             });
             
-            console.log('✅ 已覆盖现有的navigator.userAgentData，平台设置为:', platformName);
+            console.log(' 已覆盖现有的navigator.userAgentData，平台设置为:', platformName);
         } catch (e) {
-            console.warn('⚠️ 无法覆盖现有的navigator.userAgentData:', e);
+            console.warn(' 无法覆盖现有的navigator.userAgentData:', e);
         }
     }
     
@@ -269,15 +254,15 @@
         const observer = new PerformanceObserver((list) => {
             list.getEntries().forEach((entry) => {
                 if (entry.entryType === 'navigation' || entry.entryType === 'resource') {
-                    console.log(`🌐 网络请求: ${entry.name}`);
+                    console.log(` 网络请求: ${entry.name}`);
                 }
             });
         });
         
         observer.observe({ entryTypes: ['navigation', 'resource'] });
-        console.log('✅ 网络请求监控已启用');
+        console.log(' 网络请求监控已启用');
     } catch (e) {
-        console.warn('⚠️ PerformanceObserver不支持:', e);
+        console.warn(' PerformanceObserver不支持:', e);
     }
     
     // 6. 定期检查并强制更新头部（额外的保障措施）
@@ -290,10 +275,10 @@
                         return navigatorPlatform;
                     }
                 });
-                console.log('🔄 定期检查已重新设置 navigator.platform 为:', navigatorPlatform);
+                console.log(' 定期检查已重新设置 navigator.platform 为:', navigatorPlatform);
             }
         } catch (e) {
-            console.warn('⚠️ 定期检查无法更新 navigator.platform:', e);
+            console.warn(' 定期检查无法更新 navigator.platform:', e);
         }
         
         // 检查并强制更新userAgentData
@@ -327,10 +312,10 @@
                         };
                     }
                 });
-                console.log('🔄 定期检查已重新设置 userAgentData.platform 为:', platformName);
+                console.log(' 定期检查已重新设置 userAgentData.platform 为:', platformName);
             }
         } catch (e) {
-            console.warn('⚠️ 定期检查无法更新 userAgentData:', e);
+            console.warn(' 定期检查无法更新 userAgentData:', e);
         }
     }, 1000); // 每秒检查一次
     
@@ -341,7 +326,7 @@
             if (mutation.type === 'childList') {
                 mutation.addedNodes.forEach(function(node) {
                     if (node.tagName === 'IFRAME') {
-                        console.log('🔍 检测到新iframe，重新应用头部伪装');
+                        console.log(' 检测到新iframe，重新应用头部伪装');
                         // 在iframe加载完成后重新应用伪装
                         node.addEventListener('load', function() {
                             try {
@@ -387,7 +372,7 @@
                                     }
                                 }
                             } catch (e) {
-                                console.warn('⚠️ iframe头部伪装失败:', e);
+                                console.warn(' iframe头部伪装失败:', e);
                             }
                         });
                     }
@@ -398,8 +383,5 @@
     
     // 开始观察DOM变化
     observer.observe(document, { childList: true, subtree: true });
-    
-    console.log('✅ 智能HTTP头部伪装完成（防重复版），平台设置为:', platformValue);
-    console.log('🎯 分工明确：CEF层处理平台相关头部，JavaScript层处理应用层头部');
     
 })();

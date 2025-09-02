@@ -17,15 +17,13 @@
         try {
             ws = new OriginalWebSocket(url, protocols);
         } catch (e) {
-            console.warn('⚠️ WebSocket创建失败，使用模拟对象:', e.message);
             return createMockWebSocket(url);
         }
         
         // 错误处理 - 避免无限重试
         const originalOnError = ws.onerror;
         ws.onerror = function(event) {
-            console.warn('⚠️ WebSocket连接失败，静默处理:', url);
-            
+
             // 不进行重试，直接静默处理
             this.readyState = OriginalWebSocket.CLOSED;
             
@@ -47,7 +45,6 @@
         // 连接成功处理
         const originalOnOpen = ws.onopen;
         ws.onopen = function(event) {
-            console.log('✅ WebSocket连接成功:', url);
             if (originalOnOpen && typeof originalOnOpen === 'function') {
                 originalOnOpen.call(this, event);
             }
@@ -77,7 +74,7 @@
             
             // 模拟方法
             send: function(data) {
-                console.warn('⚠️ 模拟WebSocket发送（连接未建立）:', data);
+                console.warn(' 模拟WebSocket发送（连接未建立）:', data);
             },
             
             close: function(code, reason) {
@@ -136,6 +133,5 @@
         }
     }, true);
     
-    console.log('✅ WebSocket优雅错误处理已启用');
-    
+
 })();

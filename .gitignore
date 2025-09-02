@@ -1,0 +1,12 @@
+# phpstorm project files
+.idea
+.idea/*
+.idea/workspace.xml
+.Logs/*
+.Logs
+Logs
+*.exe*
+/temp
+go.sum
+.DS_Store
+/.vscode
