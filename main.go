@@ -25,7 +25,7 @@ func main() {
 	// 1. 加载配置文件
 	configLoader := config.NewLoader()
 	if err := configLoader.LoadAll(); err != nil {
-		log.Fatalf("❌ 配置加载失败: %v", err)
+		log.Fatalf("配置加载失败: %v", err)
 	}
 	log.Println("配置加载成功")
 
@@ -63,7 +63,7 @@ func main() {
 	log.Println("正在初始化 CEF 浏览器...")
 	// 初始化CEF框架（只能调用一次）
 	cef.GlobalInit(nil, &resources)
-
+	cef.BrowserWindow.Config.IconFS = "resources/icon.png"
 	app := browserInit.Initialize()
 
 	log.Println("启动 CEF 应用...")
