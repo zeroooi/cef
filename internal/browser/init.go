@@ -105,8 +105,8 @@ func (init *Initializer) configureBrowserWindow() {
 func (init *Initializer) configureAssetServer() {
 	// 配置内置静态资源服务器的安全验证头
 	// 这是一种简单的安全机制，防止未授权访问静态资源
-	assetserve.AssetsServerHeaderKeyName = "energy"
-	assetserve.AssetsServerHeaderKeyValue = "energy"
+	//assetserve.AssetsServerHeaderKeyName = "energy"
+	//assetserve.AssetsServerHeaderKeyValue = "energy"
 
 	// 设置浏览器进程启动完成后的回调函数
 	// 当浏览器进程启动完成后，会执行这个回调来启动内置的HTTP服务器

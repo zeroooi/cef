@@ -126,7 +126,7 @@
     "persistent-storage": "granted"
   },
   "app": {
-    "default_url": "https://amiunique.org",
+    "default_url": "https://agent.oceanengine.com/",
     "window_title": "安全浏览器"
   },
   "headers": {

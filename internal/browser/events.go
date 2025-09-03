@@ -17,7 +17,7 @@ import (
 )
 
 // 需要删除的HTTP头部
-var needRemoveHeaderKey = []string{"DNT", "energy"}
+var needRemoveHeaderKey = []string{"DNT"}
 
 // EventHandler 浏览器事件处理器
 type EventHandler struct {
