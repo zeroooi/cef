@@ -6,7 +6,6 @@ import (
 	"cef/internal/config"
 	"cef/internal/fingerprint"
 	"cef/internal/security"
-	"fmt"
 	"strings"
 	"time"
 
@@ -47,13 +46,6 @@ func NewEventHandler(
 
 // SetupEvents 设置浏览器事件处理
 func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserWindow) {
-	// 监听来自前端JavaScript的"count"消息
-	// 当前端调用ipc.emit("count", [count++])时，这个函数会被触发
-	ipc.On("count", func(value int) {
-		// 在控制台打印接收到的计数值
-		println("count", value)
-	})
-
 	// 设置资源加载前的回调，用于修改请求头
 	event.SetOnBeforeResourceLoad(func(sender lcl.IObject, browser *cef.ICefBrowser, frame *cef.ICefFrame, request *cef.ICefRequest, callback *cef.ICefCallback, result *consts.TCefReturnValue, window cef.IBrowserWindow) {
 		// 获取并清理原有头部映射
@@ -135,8 +127,6 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 		}
 		return false
 	})
-
-	fmt.Println("✅ 浏览器事件处理器设置完成")
 }
 
 // RemoveKey 从StringMultiMap中删除指定的key
@@ -203,9 +193,6 @@ func (h *EventHandler) DeduplicateHeaders(header *cef.ICefStringMultiMap) *cef.I
 func (h *EventHandler) handlePageLoad(browser *cef.ICefBrowser, frame *cef.ICefFrame, httpStatusCode int32, window cef.IBrowserWindow) {
 	currentURL := frame.Url()
 
-	// 输出调试信息帮助定位问题
-	fmt.Printf("页面加载事件 - URL: %s, 状态码: %d\n", currentURL, httpStatusCode)
-
 	// 检查URL是否被允许访问（优先检查，避免不必要的脚本注入）
 	if currentURL != "" && currentURL != "about:blank" && !h.whitelistValidator.IsURLAllowed(currentURL) {
 		h.handleBlockedURL(browser, currentURL)
@@ -213,13 +200,11 @@ func (h *EventHandler) handlePageLoad(browser *cef.ICefBrowser, frame *cef.ICefF
 	}
 
 	// 仅对允许的URL进行指纹注入
-	fmt.Printf("开始注入指纹脚本 - URL: %s\n", currentURL)
 	h.injectFingerprintScripts(browser)
 
 	// 延迟补强注入（仅一次）
 	go func() {
 		time.Sleep(200 * time.Millisecond)
-		fmt.Printf("延迟补强注入 - URL: %s\n", currentURL)
 		h.injectFingerprintScripts(browser)
 	}()
 
@@ -236,14 +221,12 @@ func (h *EventHandler) handleBlockedURL(browser *cef.ICefBrowser, currentURL str
 		return
 	}
 
-	fmt.Printf("检测到不允许的URL: %s，准备重定向\n", currentURL)
 	h.whitelistValidator.LogBlockedAccess(currentURL)
 
 	if redirectURL != "" && redirectURL != currentURL {
 		h.lastRedirectURL = currentURL
 		h.redirectCount++
 
-		fmt.Printf("重定向到: %s\n", redirectURL)
 		browser.MainFrame().LoadUrl(redirectURL)
 
 		// 重置计数器（延迟重置）
@@ -260,14 +243,12 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 	headersFixScript := h.scriptManager.GetHeadersFixScript()
 	if headersFixScript != "" {
 		browser.MainFrame().ExecuteJavaScript(headersFixScript, "", 0)
-		fmt.Printf("HTTP头部伪装已启用\n")
 	}
 
 	// 注入WebSocket修复脚本
 	websocketFixScript := h.scriptManager.GetWebSocketFixScript()
 	if websocketFixScript != "" {
 		browser.MainFrame().ExecuteJavaScript(websocketFixScript, "", 0)
-		fmt.Printf("WebSocket优雅错误处理已启用\n")
 	}
 
 	// 注入CORS禁用脚本（在指纹脚本之前）
@@ -329,25 +310,19 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 	ultraSimpleTest := `console.log('🔥 JavaScript执行测试 - 成功！');`
 	browser.MainFrame().ExecuteJavaScript(ultraSimpleTest, "", 0)
 
-	// 重新启用完整的指纹脚本，但优化过
-	fmt.Printf("🔧 开始注入优化后的指纹脚本\n")
-
 	// 注入静态指纹脚本
 	if h.scriptManager.IsScriptLoaded() {
 		staticScript := h.scriptManager.GetStaticScript()
 		browser.MainFrame().ExecuteJavaScript(staticScript, "", 0)
-		fmt.Printf("✅ 静态指纹脚本注入完成\n")
 	}
 
 	// 注入动态基础指纹脚本
 	basicScript := h.scriptGenerator.GenerateBasicScript()
 	browser.MainFrame().ExecuteJavaScript(basicScript, "", 0)
-	fmt.Printf("✅ 基础指纹脚本注入完成\n")
 
 	// 注入高级指纹脚本
 	advancedScript := h.scriptGenerator.GenerateAdvancedScript()
 	browser.MainFrame().ExecuteJavaScript(advancedScript, "", 0)
-	fmt.Printf("✅ 高级指纹脚本注入完成\n")
 
 	// 验证脚本 - 检查关键指标
 	verificationScript := `
@@ -377,8 +352,6 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 	}, 1000);
 	`
 	browser.MainFrame().ExecuteJavaScript(verificationScript, "", 0)
-
-	fmt.Printf("指纹伪装、CORS禁用、WebSocket优雅处理和HTTP头部伪装已应用\n")
 }
 
 // sendSystemInfo 发送系统信息到前端
@@ -415,6 +388,4 @@ func (h *EventHandler) UpdateConfigs(
 	h.browserConfig = browserConfig
 	h.whitelistValidator = whitelistValidator
 	h.scriptGenerator.UpdateConfig(browserConfig)
-
-	fmt.Println("事件处理器配置已更新")
 }

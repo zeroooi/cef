@@ -4,7 +4,6 @@ package fingerprint
 
 import (
 	"embed"
-	"fmt"
 )
 
 // ScriptManager 指纹脚本管理器
@@ -33,9 +32,7 @@ func (sm *ScriptManager) LoadFingerprintScript() error {
 	if data, err := sm.resources.ReadFile("resources/fingerprint.js"); err == nil {
 		sm.fingerprintJS = string(data)
 		sm.isScriptLoaded = true
-		fmt.Println("成功加载浏览器指纹伪装脚本")
 	} else {
-		fmt.Printf("加载指纹伪装脚本失败，将使用空脚本: %v\n", err)
 		sm.fingerprintJS = ""
 		sm.isScriptLoaded = false
 	}
@@ -43,18 +40,14 @@ func (sm *ScriptManager) LoadFingerprintScript() error {
 	// 加载WebSocket修复脚本
 	if data, err := sm.resources.ReadFile("resources/websocket-fix.js"); err == nil {
 		sm.websocketFixJS = string(data)
-		fmt.Println("成功加载WebSocket修复脚本")
 	} else {
-		fmt.Printf("加载WebSocket修复脚本失败: %v\n", err)
 		sm.websocketFixJS = ""
 	}
 
 	// 加载HTTP头部修复脚本
 	if data, err := sm.resources.ReadFile("resources/headers-fix.js"); err == nil {
 		sm.headersFixJS = string(data)
-		fmt.Println("成功加载HTTP头部修复脚本")
 	} else {
-		fmt.Printf("加载HTTP头部修复脚本失败: %v\n", err)
 		sm.headersFixJS = ""
 	}
 
@@ -92,6 +85,5 @@ func (sm *ScriptManager) GetScriptInfo() map[string]interface{} {
 
 // ReloadScript 重新加载脚本
 func (sm *ScriptManager) ReloadScript() error {
-	fmt.Println("重新加载指纹伪装脚本...")
 	return sm.LoadFingerprintScript()
 }

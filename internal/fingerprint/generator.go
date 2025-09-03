@@ -695,7 +695,6 @@ func (g *Generator) GenerateAdvancedScript() string {
 // UpdateConfig 更新配置（运行时热更新）
 func (g *Generator) UpdateConfig(newConfig *config.BrowserConfig) {
 	g.browserConfig = newConfig
-	fmt.Println("指纹生成器配置已更新")
 }
 
 // GetConfigSummary 获取当前配置摘要（用于调试）

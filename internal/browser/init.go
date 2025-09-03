@@ -5,8 +5,6 @@ package browser
 import (
 	"cef/internal/config"
 	"embed"
-	"fmt"
-
 	"github.com/energye/energy/v2/cef"
 	"github.com/energye/energy/v2/pkgs/assetserve"
 )
@@ -38,7 +36,6 @@ func (init *Initializer) Initialize() *cef.TCEFApplication {
 
 	// 设置全局User-Agent（影响所有HTTP请求）
 	app.SetUserAgent(init.browserConfig.Basic.UserAgent)
-	fmt.Printf("已设置HTTP User-Agent: %s\n", init.browserConfig.Basic.UserAgent)
 
 	// 设置平台信息
 	app.AddCustomCommandLine("--user-agent", init.browserConfig.Basic.UserAgent)
@@ -72,7 +69,6 @@ func (init *Initializer) Initialize() *cef.TCEFApplication {
 
 	// 统一的禁用功能配置（避免重复）
 	app.AddCustomCommandLine("--disable-features", "VizDisplayCompositor,SiteIsolation,TranslateUI,BackgroundSync")
-	fmt.Println("已配置CEF安全选项以避免CORS错误和WebSocket连接问题")
 
 	// 配置浏览器窗口
 	init.configureBrowserWindow()
@@ -86,7 +82,6 @@ func (init *Initializer) Initialize() *cef.TCEFApplication {
 		init.eventHandler.SetupEvents(event, window)
 	})
 
-	fmt.Println("CEF初始化完成")
 	return app
 }
 
@@ -126,17 +121,12 @@ func (init *Initializer) configureAssetServer() {
 		server.Assets = init.resources
 		// 在新的goroutine中启动HTTP服务器（非阻塞方式）
 		go server.StartHttpServer()
-
-		// 输出调试信息
-		fmt.Printf("静态资源HTTP服务器已启动在端口22022\n")
-		fmt.Printf("访问 URL: http://localhost:22022/index.html\n")
 	})
 }
 
 // UpdateConfig 更新浏览器配置
 func (init *Initializer) UpdateConfig(newConfig *config.BrowserConfig) {
 	init.browserConfig = newConfig
-	fmt.Println("浏览器初始化器配置已更新")
 }
 
 // GetConfigSummary 获取当前配置摘要
