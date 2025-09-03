@@ -11,3 +11,4 @@ go.sum
 .DS_Store
 /.vscode
 /releases
+/build
