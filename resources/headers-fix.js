@@ -52,7 +52,7 @@
     // 避免与CEF层重复设置，防止头部值重复问题
     const jsControlledHeaders = {
         // 这些头部由JavaScript层专门处理
-        'accept-language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        // 注意：accept-language 由CEF层和动态脚本处理，避免在此硬编码
         'cache-control': 'no-cache',
         'pragma': 'no-cache',
         'x-sw-cache': '7'

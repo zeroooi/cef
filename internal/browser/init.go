@@ -43,9 +43,10 @@ func (init *Initializer) Initialize() *cef.TCEFApplication {
 	// 设置平台信息
 	app.AddCustomCommandLine("--user-agent", init.browserConfig.Basic.UserAgent)
 
-	// 设置接受语言
+	// 设置接受语言 - 仅使用--lang，避免--accept-lang导致的解析错误
 	app.AddCustomCommandLine("--lang", "zh-CN")
-	app.AddCustomCommandLine("--accept-lang", init.browserConfig.Basic.AcceptLanguage)
+	// 注释掉可能导致重复的--accept-lang参数，改为在HTTP请求拦截器中设置
+	// app.AddCustomCommandLine("--accept-lang", init.browserConfig.Basic.AcceptLanguage)
 
 	// 设置CEF命令行开关来解决CORS和安全问题
 	app.AddCustomCommandLine("--disable-web-security", "")

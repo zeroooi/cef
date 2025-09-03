@@ -86,6 +86,12 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 		}
 		// 直接设置关键头部到request，确保生效
 		request.SetHeaderByName("sec-ch-ua-platform", `"`+platformValue+`"`, true)
+
+		// 直接设置Accept-Language头部，确保生效
+		acceptLang := h.browserConfig.Basic.AcceptLanguage
+		if acceptLang != "" {
+			request.SetHeaderByName("Accept-Language", acceptLang, true)
+		}
 	})
 
 	// 设置页面加载完成事件的处理函数

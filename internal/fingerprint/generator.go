@@ -22,6 +22,11 @@ func NewGenerator(browserConfig *config.BrowserConfig) *Generator {
 
 // GenerateBasicScript 根据配置文件参数创建完整的浏览器指纹伪装脚本
 func (g *Generator) GenerateBasicScript() string {
+	// 从配置中提取主语言
+	primaryLanguage := g.extractPrimaryLanguage()
+	// 从配置中生成语言数组
+	languagesArray := g.generateLanguagesArray()
+
 	return `
 
 // 立即设置初始状态，避免时序问题
@@ -35,8 +40,8 @@ if (!window.__fingerprintConfig) {
         userAgent: '` + g.browserConfig.Basic.UserAgent + `',
         platform: '` + g.browserConfig.Basic.Platform + `',
         hardwareConcurrency: ` + fmt.Sprintf("%d", g.browserConfig.Hardware.CPUCores) + `,
-        language: 'zh-CN',
-        languages: ['zh-CN', 'zh', 'en'],  // 精确匹配测试页面期望格式
+        language: '` + primaryLanguage + `',
+        languages: ` + languagesArray + `,
         screenWidth: ` + fmt.Sprintf("%d", g.browserConfig.Screen.Width) + `,
         screenHeight: ` + fmt.Sprintf("%d", g.browserConfig.Screen.Height) + `,
         devicePixelRatio: ` + fmt.Sprintf("%.1f", g.browserConfig.Screen.DevicePixelRatio) + `
@@ -148,8 +153,8 @@ function immediateValidation() {
         userAgent: '` + g.browserConfig.Basic.UserAgent + `',
         platform: '` + g.browserConfig.Basic.Platform + `',
         hardwareConcurrency: ` + fmt.Sprintf("%d", g.browserConfig.Hardware.CPUCores) + `,
-        language: 'zh-CN',
-        languages: ['zh-CN', 'zh', 'en'],
+        language: '` + primaryLanguage + `',
+        languages: ` + languagesArray + `,
         screenWidth: ` + fmt.Sprintf("%d", g.browserConfig.Screen.Width) + `,
         screenHeight: ` + fmt.Sprintf("%d", g.browserConfig.Screen.Height) + `,
         devicePixelRatio: ` + fmt.Sprintf("%.1f", g.browserConfig.Screen.DevicePixelRatio) + `
@@ -511,6 +516,27 @@ func (g *Generator) GetConfigSummary() map[string]interface{} {
 		"cpu_cores":      g.browserConfig.Hardware.CPUCores,
 		"device_memory":  g.browserConfig.Hardware.DeviceMemory,
 	}
+}
+
+// extractPrimaryLanguage 从AcceptLanguage配置中提取主语言
+func (g *Generator) extractPrimaryLanguage() string {
+	acceptLang := g.browserConfig.Basic.AcceptLanguage
+	if acceptLang == "" {
+		return "zh-CN" // 默认值
+	}
+
+	// 提取第一个语言标签
+	languages := strings.Split(acceptLang, ",")
+	if len(languages) > 0 {
+		primaryLang := strings.TrimSpace(languages[0])
+		// 移除质量值，如 "zh-CN;q=0.9" -> "zh-CN"
+		if strings.Contains(primaryLang, ";") {
+			primaryLang = strings.Split(primaryLang, ";")[0]
+		}
+		return strings.TrimSpace(primaryLang)
+	}
+
+	return "zh-CN" // 默认值
 }
 
 // generateLanguagesArray 生成语言数组的JavaScript代码
