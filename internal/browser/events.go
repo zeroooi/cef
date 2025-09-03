@@ -325,19 +325,58 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 	`
 	browser.MainFrame().ExecuteJavaScript(corsScript, "", 0)
 
+	// 最简单的测试脚本 - 确保JavaScript执行正常
+	ultraSimpleTest := `console.log('🔥 JavaScript执行测试 - 成功！');`
+	browser.MainFrame().ExecuteJavaScript(ultraSimpleTest, "", 0)
+
+	// 重新启用完整的指纹脚本，但优化过
+	fmt.Printf("🔧 开始注入优化后的指纹脚本\n")
+
 	// 注入静态指纹脚本
 	if h.scriptManager.IsScriptLoaded() {
 		staticScript := h.scriptManager.GetStaticScript()
 		browser.MainFrame().ExecuteJavaScript(staticScript, "", 0)
+		fmt.Printf("✅ 静态指纹脚本注入完成\n")
 	}
 
 	// 注入动态基础指纹脚本
 	basicScript := h.scriptGenerator.GenerateBasicScript()
 	browser.MainFrame().ExecuteJavaScript(basicScript, "", 0)
+	fmt.Printf("✅ 基础指纹脚本注入完成\n")
 
 	// 注入高级指纹脚本
 	advancedScript := h.scriptGenerator.GenerateAdvancedScript()
 	browser.MainFrame().ExecuteJavaScript(advancedScript, "", 0)
+	fmt.Printf("✅ 高级指纹脚本注入完成\n")
+
+	// 验证脚本 - 检查关键指标
+	verificationScript := `
+	setTimeout(function() {
+		console.log('🔍 === 指纹验证结果 ===');
+		console.log('🔍 doNotTrack:', navigator.doNotTrack);
+		console.log('🔍 Navigator属性数量:', Object.getOwnPropertyNames(navigator).length);
+		console.log('🔍 Navigator所有属性:', Object.getOwnPropertyNames(navigator));
+		console.log('🔍 语言:', navigator.language);
+		console.log('🔍 语言列表:', navigator.languages);
+		
+		// 检查权限API
+		if (navigator.permissions) {
+			navigator.permissions.query({name: 'notifications'}).then(result => {
+				console.log('🔍 权限-通知:', result.state);
+			});
+		}
+		
+		// 检查媒体设备
+		if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+			navigator.mediaDevices.enumerateDevices().then(devices => {
+				console.log('🔍 媒体设备数量:', devices.length);
+			});
+		}
+		
+		console.log('🔍 === 验证完成 ===');
+	}, 1000);
+	`
+	browser.MainFrame().ExecuteJavaScript(verificationScript, "", 0)
 
 	fmt.Printf("指纹伪装、CORS禁用、WebSocket优雅处理和HTTP头部伪装已应用\n")
 }

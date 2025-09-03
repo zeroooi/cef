@@ -20,6 +20,8 @@ type BrowserConfig struct {
 		Height           int     `json:"height"`
 		AvailWidth       int     `json:"avail_width"`
 		AvailHeight      int     `json:"avail_height"`
+		AvailTop         int     `json:"avail_top"`
+		AvailLeft        int     `json:"avail_left"`
 		ColorDepth       int     `json:"color_depth"`
 		PixelDepth       int     `json:"pixel_depth"`
 		DevicePixelRatio float64 `json:"device_pixel_ratio"`
@@ -81,6 +83,11 @@ type BrowserConfig struct {
 	// 媒体设备配置
 	MediaDevices struct {
 		EnumerateDevicesNoise bool `json:"enumerate_devices_noise"`
+		FakeDevices           []struct {
+			Kind     string `json:"kind"`
+			Label    string `json:"label"`
+			DeviceId string `json:"deviceId"`
+		} `json:"fake_devices"`
 	} `json:"media_devices"`
 
 	// 权限配置

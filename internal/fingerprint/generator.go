@@ -59,27 +59,40 @@ try {
         platform: function() { return window.__fingerprintConfig.platform; },
         hardwareConcurrency: function() { return window.__fingerprintConfig.hardwareConcurrency; },
         language: function() { return window.__fingerprintConfig.language; },
-        languages: function() { return window.__fingerprintConfig.languages; }
+        languages: function() { return window.__fingerprintConfig.languages; },
+        doNotTrack: function() { return null; }  // 设置为禁用状态，更常见
     };
     
-    // 双重覆盖确保生效
+    // 安全覆盖确保生效
     Object.keys(navigatorOverrides).forEach(prop => {
         const getter = navigatorOverrides[prop];
         try {
-            // 覆盖Navigator.prototype
-            Object.defineProperty(Navigator.prototype, prop, {
-                get: getter,
-                enumerable: true,
-                configurable: true
-            });
-            // 覆盖navigator实例
+            // 先删除属性（如果存在）
+            delete navigator[prop];
+            // 然后重新定义
             Object.defineProperty(navigator, prop, {
                 get: getter,
                 enumerable: true,
                 configurable: true
             });
+            console.log('Navigator.' + prop + ' 覆盖成功');
         } catch(e) {
-            console.warn(prop + ' 覆盖失败:', e.message);
+            // 如果直接覆盖失败，尝试使用descriptor方式
+            try {
+                const descriptor = Object.getOwnPropertyDescriptor(navigator, prop);
+                if (descriptor && descriptor.configurable) {
+                    Object.defineProperty(navigator, prop, {
+                        get: getter,
+                        enumerable: true,
+                        configurable: true
+                    });
+                    console.log('Navigator.' + prop + ' 覆盖成功（备用方式）');
+                } else {
+                    console.warn('Navigator.' + prop + ' 不可配置，跳过');
+                }
+            } catch(e2) {
+                console.warn('Navigator.' + prop + ' 覆盖完全失败:', e2.message);
+            }
         }
     });
     
@@ -89,6 +102,8 @@ try {
         height: ` + fmt.Sprintf("%d", g.browserConfig.Screen.Height) + `,
         availWidth: ` + fmt.Sprintf("%d", g.browserConfig.Screen.AvailWidth) + `,
         availHeight: ` + fmt.Sprintf("%d", g.browserConfig.Screen.AvailHeight) + `,
+        availTop: ` + fmt.Sprintf("%d", g.browserConfig.Screen.AvailTop) + `,
+        availLeft: ` + fmt.Sprintf("%d", g.browserConfig.Screen.AvailLeft) + `,
         colorDepth: ` + fmt.Sprintf("%d", g.browserConfig.Screen.ColorDepth) + `,
         pixelDepth: ` + fmt.Sprintf("%d", g.browserConfig.Screen.PixelDepth) + `
     };
@@ -129,6 +144,153 @@ try {
         console.log('devicePixelRatio 覆盖成功，值:', ` + fmt.Sprintf("%.1f", g.browserConfig.Screen.DevicePixelRatio) + `);
     } catch(e) {
         console.warn('devicePixelRatio 覆盖失败:', e.message);
+    }
+    
+    // === 激进清理Navigator属性，只保留最基本的属性 ===
+    try {
+        // 只保留这些最基本的Navigator属性
+        const essentialProps = [
+            'userAgent', 'language', 'languages', 'platform', 'appName', 
+            'appVersion', 'cookieEnabled', 'onLine', 'doNotTrack',
+            'hardwareConcurrency', 'maxTouchPoints', 'vendor'
+        ];
+        
+        // 获取所有当前属性
+        const allProps = Object.getOwnPropertyNames(navigator);
+        let deletedCount = 0;
+        
+        allProps.forEach(prop => {
+            // 如果不在基本属性列表中，就删除
+            if (!essentialProps.includes(prop)) {
+                try {
+                    delete navigator[prop];
+                    deletedCount++;
+                } catch(e) {
+                    // 如果无法删除，重定义为undefined
+                    try {
+                        Object.defineProperty(navigator, prop, {
+                            get: function() { return undefined; },
+                            configurable: true,
+                            enumerable: false  // 设为不可枚举
+                        });
+                        deletedCount++;
+                    } catch(e2) {}
+                }
+            }
+        });
+        
+        console.log('Navigator属性清理完成，删除了', deletedCount, '个属性');
+        console.log('剩余属性数量:', Object.getOwnPropertyNames(navigator).length);
+    } catch(e) {
+        console.warn('Navigator属性清理失败:', e);
+    }
+    
+    // === 权限API伪装 ===
+    try {
+        if (navigator.permissions) {
+            const originalQuery = navigator.permissions.query;
+            navigator.permissions.query = function(descriptor) {
+                const permissionName = descriptor.name;
+                
+                // 根据配置返回权限状态
+                const permissions = {
+                    "notifications": "granted",
+                    "geolocation": "granted",
+                    "camera": "granted", 
+                    "microphone": "granted",
+                    "accelerometer": "granted",
+                    "ambient-light-sensor": "granted",
+                    "background-sync": "granted",
+                    "magnetometer": "granted",
+                    "clipboard-read": "granted",
+                    "clipboard-write": "granted",
+                    "payment-handler": "granted",
+                    "persistent-storage": "granted"
+                };
+                
+                const state = permissions[permissionName] || "prompt";
+                
+                return Promise.resolve({
+                    name: permissionName,
+                    state: state,
+                    onchange: null
+                });
+            };
+        }
+        
+        console.log('权限API伪装完成');
+    } catch(e) {
+        console.warn('权限API伪装失败:', e);
+    }
+    
+    // === 媒体设备伪装 ===
+    try {
+        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+            const originalEnumerateDevices = navigator.mediaDevices.enumerateDevices;
+            navigator.mediaDevices.enumerateDevices = function() {
+                return Promise.resolve([
+                    {
+                        kind: "audioinput",
+                        label: "Default - Microphone (Realtek(R) Audio)",
+                        deviceId: "default",
+                        groupId: "audio-group-1"
+                    }
+                ]);
+            };
+        }
+        
+        console.log('媒体设备伪装完成');
+    } catch(e) {
+        console.warn('媒体设备伪装失败:', e);
+    }
+    
+    // === Battery API 伪装 ===
+    try {
+        if (navigator.getBattery) {
+            navigator.getBattery = function() {
+                return Promise.resolve({
+                    charging: false,
+                    chargingTime: Infinity,
+                    dischargingTime: 3600, // 1小时
+                    level: 0.8, // 80%
+                    onchargingchange: null,
+                    onchargingtimechange: null,
+                    ondischargingtimechange: null,
+                    onlevelchange: null
+                });
+            };
+        }
+        
+        console.log('Battery API伪装完成');
+    } catch(e) {
+        console.warn('Battery API伪装失败:', e);
+    }
+    
+    // === Connection API 伪装 ===
+    try {
+        const fakeConnection = {
+            downlink: 1.5,
+            effectiveType: "3g",
+            rtt: 300,
+            saveData: false,
+            type: "wifi",
+            onchange: null
+        };
+        
+        if (navigator.connection) {
+            Object.keys(fakeConnection).forEach(key => {
+                try {
+                    Object.defineProperty(navigator.connection, key, {
+                        get: () => fakeConnection[key],
+                        configurable: true
+                    });
+                } catch(e) {}
+            });
+        }
+        
+        console.log('Connection API伪装完成');
+    } catch(e) {
+        console.warn('Connection API伪装失败:', e);
     }
     
     console.log('系统性指纹伪装完成');
@@ -302,12 +464,21 @@ func (g *Generator) GenerateAdvancedScript() string {
         const VERSION = 0x1F02;
         const SHADING_LANGUAGE_VERSION = 0x8B8C;
         
-        // 目标WebGL配置
+        // 目标WebGL配置 - 更全面的参数伪装
         const webglConfig = {
             [VENDOR]: '` + g.browserConfig.WebGL.Vendor + `',
             [RENDERER]: '` + g.browserConfig.WebGL.Renderer + `',
             [VERSION]: '` + g.browserConfig.WebGL.Version + `',
-            [SHADING_LANGUAGE_VERSION]: '` + g.browserConfig.WebGL.ShadingLanguageVersion + `'
+            [SHADING_LANGUAGE_VERSION]: '` + g.browserConfig.WebGL.ShadingLanguageVersion + `',
+            // 额外的常见参数
+            0x8B8A: 1, // MAX_VERTEX_ATTRIBS
+            0x8DFB: 16, // MAX_TEXTURE_IMAGE_UNITS
+            0x84E8: 16, // MAX_COMBINED_TEXTURE_IMAGE_UNITS
+            0x8872: 4096, // MAX_TEXTURE_SIZE
+            0x851C: 1024, // MAX_CUBE_MAP_TEXTURE_SIZE
+            0x8073: 4, // SUBPIXEL_BITS
+            0x80E9: 8, // SAMPLE_BUFFERS
+            0x80EA: 4  // SAMPLES
         };
          
         // 保存原始方法
@@ -395,6 +566,29 @@ func (g *Generator) GenerateAdvancedScript() string {
                     return result;
                 };
             }
+            
+            // 音频格式伪装 - 标准化音频编解码器支持
+            const originalCanPlayType = HTMLMediaElement.prototype.canPlayType;
+            HTMLMediaElement.prototype.canPlayType = function(type) {
+                // 标准化常见音频格式支持，避免独特性
+                const commonFormats = {
+                    'audio/ogg; codecs="vorbis"': 'probably',
+                    'audio/ogg; codecs="opus"': 'probably', 
+                    'audio/wav; codecs="1"': 'probably',
+                    'audio/webm; codecs="vorbis"': 'probably',
+                    'audio/webm; codecs="opus"': 'probably',
+                    'audio/mp4': 'maybe',
+                    'audio/mpeg': 'maybe',
+                    'audio/flac': '',
+                    'audio/wav': 'probably'
+                };
+                
+                if (commonFormats.hasOwnProperty(type)) {
+                    return commonFormats[type];
+                }
+                
+                return originalCanPlayType.call(this, type);
+            };
             
             console.log('音频指纹伪装完成');
             
