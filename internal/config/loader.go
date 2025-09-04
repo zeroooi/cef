@@ -84,9 +84,9 @@ func (l *Loader) LoadWhitelistConfig() error {
 	v.AddConfigPath("./config")  // 配置文件路径
 
 	// 设置默认值
-	v.SetDefault("allowed_domains", []string{"google.com", "www.google.com", "accounts.google.com"})
+	v.SetDefault("allowed_domains", []string{"google.com", "agent.oceanengine.com", "accounts.google.com"})
 	v.SetDefault("blocked_message", "访问被限制：该网站不在允许访问列表中")
-	v.SetDefault("redirect_blocked_to", "https://www.google.com")
+	v.SetDefault("redirect_blocked_to", "https://agent.oceanengine.com/")
 
 	// 读取配置文件
 	if err := v.ReadInConfig(); err != nil {
