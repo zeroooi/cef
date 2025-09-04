@@ -127,7 +127,7 @@
   },
   "app": {
     "default_url": "https://agent.oceanengine.com/",
-    "window_title": "安全浏览器"
+    "window_title": "悟空"
   },
   "headers": {
     "sec_ch_ua": "\"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"",

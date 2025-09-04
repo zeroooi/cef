@@ -158,7 +158,7 @@ func (l *Loader) setDefaultBrowserConfig(v *viper.Viper) {
 	v.SetDefault("webrtc.fake_public_ip", "8.8.8.8")
 	v.SetDefault("webrtc.block_data_channels", false)
 
-	v.SetDefault("app.default_url", "https://www.google.com")
+	v.SetDefault("app.default_url", "https://agent.oceanengine.com")
 	v.SetDefault("app.window_title", "安全浏览器")
 
 	// HTTP头部默认值
