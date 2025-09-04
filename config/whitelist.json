@@ -12,5 +12,5 @@
     "analytics.oceanengine.com"
   ],
   "blocked_message": "访问被限制：该网站不在允许访问列表中",
-  "redirect_blocked_to": "https://www.baidu.com/"
+  "redirect_blocked_to": "https://agent.oceanengine.com/"
 }

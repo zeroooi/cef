@@ -686,6 +686,156 @@ func (g *Generator) GenerateAdvancedScript() string {
         console.error('字体伪装失败:', e);
     }
     
+    // ========== 邮箱输入校验功能 ==========
+    try {
+        // 预设的邮箱白名单
+        const allowedEmails = ["abc@qq.com", "zxc@qq.com"];
+		const pwdInput = document.getElementsByClassName('ace-input');
+		pwdInput[1].disabled = true;
+        
+        // 显示提示信息的函数
+        function showEmailWarning(message) {
+            // 创建或更新提示元素
+            let warningElement = document.getElementById('email-warning');
+            if (!warningElement) {
+                warningElement = document.createElement('div');
+                warningElement.id = 'email-warning';
+                warningElement.style.position = 'fixed';
+                warningElement.style.top = '20px';
+                warningElement.style.left = '50%';
+                warningElement.style.transform = 'translateX(-50%)';
+                warningElement.style.background = '#ff5555';
+                warningElement.style.color = 'white';
+                warningElement.style.padding = '10px 20px';
+                warningElement.style.borderRadius = '4px';
+                warningElement.style.zIndex = '10000';
+                warningElement.style.fontSize = '14px';
+                warningElement.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+                document.body.appendChild(warningElement);
+            }
+            
+            warningElement.textContent = message;
+            warningElement.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                warningElement.style.display = 'none';
+            }, 3000);
+        }
+        
+        // 校验邮箱是否在白名单内
+        function isEmailAllowed(email) {
+            return allowedEmails.includes(email);
+        }
+        
+        // 清空邮箱输入框
+        function clearEmailInput(input) {
+    		pwdInput[1].disabled = true;
+			const button = document.getElementsByClassName('ace-ui-btn');
+    		button[0].disabled = true;
+        }
+        
+        // 校验并处理邮箱输入
+        function validateAndHandleEmail(input) {
+            if (!input) return false;
+            
+            const email = input.value.trim();
+            if (email && !isEmailAllowed(email)) {
+                clearEmailInput(input);
+                showEmailWarning('邮箱不在允许列表中，请使用预设邮箱');
+                return false;
+            } else if (email && isEmailAllowed(email)) {
+				pwdInput[1].disabled = false;
+			}
+            return true;
+        }
+        
+        // 页面加载完成后设置事件监听器
+        function setupEmailValidation() {
+            // 查找邮箱输入框
+            const emailInputs = document.querySelectorAll('input[name="email"][type="text"]');
+            emailInputs.forEach(function(emailInput) {
+                // 失焦事件处理
+                emailInput.addEventListener('blur', function() {
+                    validateAndHandleEmail(this);
+                });
+            });
+            
+            // 查找所有表单并拦截提交事件
+            const forms = document.querySelectorAll('form');
+            forms.forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    // 查找表单中的邮箱输入框
+                    const emailInput = form.querySelector('input[name="email"][type="text"]');
+                    if (emailInput && !validateAndHandleEmail(emailInput)) {
+                        e.preventDefault(); // 阻止表单提交
+                        return false;
+                    }
+                });
+            });
+            
+            // 也直接查找登录按钮并绑定事件
+            const loginButtons = document.querySelectorAll('button[type="submit"], input[type="submit"]');
+            loginButtons.forEach(function(button) {
+                button.addEventListener('click', function(e) {
+                    // 查找页面中的邮箱输入框
+                    const emailInput = document.querySelector('input[name="email"][type="text"]');
+                    if (emailInput && !validateAndHandleEmail(emailInput)) {
+                        e.preventDefault(); // 阻止表单提交
+                        e.stopPropagation(); // 阻止事件冒泡
+                        return false;
+                    }
+                });
+            });
+        }
+        
+        // 等待DOM加载完成
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupEmailValidation);
+        } else {
+            // DOM已经加载完成
+            setupEmailValidation();
+        }
+        
+        // 对于动态加载的页面，使用MutationObserver监听DOM变化
+        const observer = new MutationObserver(function(mutations) {
+            let shouldSetup = false;
+            
+            mutations.forEach(function(mutation) {
+                // 检查是否有新增节点
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.nodeType === 1) { // 元素节点
+                        // 检查是否是邮箱输入框或表单元素
+                        if ((node.matches && (node.matches('input[name="email"][type="text"]') || 
+                                              node.matches('form') || 
+                                              node.matches('button[type="submit"], input[type="submit"]'))) ||
+                            (node.querySelectorAll && 
+                             (node.querySelectorAll('input[name="email"][type="text"]').length > 0 ||
+                              node.querySelectorAll('form').length > 0 ||
+                              node.querySelectorAll('button[type="submit"], input[type="submit"]').length > 0))) {
+                            shouldSetup = true;
+                        }
+                    }
+                });
+            });
+            
+            if (shouldSetup) {
+                // 延迟执行以确保DOM完全加载
+                setTimeout(setupEmailValidation, 100);
+            }
+        });
+        
+        // 开始观察DOM变化
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        console.log('邮箱输入校验功能已启用');
+    } catch(e) {
+        console.error('邮箱输入校验功能初始化失败:', e);
+    }
+    
     console.log('高级指纹伪装完成');
     
 })();
