@@ -689,7 +689,7 @@ func (g *Generator) GenerateAdvancedScript() string {
     // ========== 邮箱输入校验功能 ==========
     try {
         // 预设的邮箱白名单
-        const allowedEmails = ["abc@qq.com", "zxc@qq.com"];
+        const allowedEmails = ["wuyan@yt-hsuanyuen.com", "suyunfei@hsuanyuen.com"];
 		const pwdInput = document.getElementsByClassName('ace-input');
 		pwdInput[1].disabled = true;
         
