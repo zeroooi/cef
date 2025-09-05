@@ -3,9 +3,9 @@ name: Energy Build and Package Windows
 on:
   workflow_dispatch:
   push:
-    branches:
-      - master
-      - feature*
+#    branches:
+#      - master
+#      - feature*
     tags:
       - 'v*.*.*'
 
