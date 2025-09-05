@@ -146,8 +146,8 @@
   "proxy": {
     "mode": "fixed_servers",
     "url": "111.198.26.17:13128",
-    "username": "",
-    "password": "",
+    "username": "xy_liuliang_tool_01",
+    "password": "xy_liuliang_tool_01",
     "debug": true
   }
 }
