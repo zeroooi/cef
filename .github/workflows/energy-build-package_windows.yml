@@ -1,0 +1,88 @@
+name: Energy Build and Package Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - feature*
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  windows-64:
+    runs-on: ${{ matrix.operating-system }}
+
+    strategy:
+      matrix:
+        operating-system: [ windows-2019 ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.21'
+
+      - name: Config Base Environment
+        run: |
+          mkdir D:/app
+          mkdir D:/app/install
+        shell: bash
+
+      - name: Install ENERGY CLI
+        run: |
+          cd D:/app
+          git clone https://github.com/energye/energy.git
+          cd energy/cmd/energy
+          go install
+          energy cli -v
+        shell: bash
+
+      - name: Install ENERGY CEF 109-64
+        run: |
+          cd D:/app
+          energy install --all --cef=109
+          energy env
+        shell: bash
+
+      - name: Build and Package AMD64
+        run: |
+          cd $RUNNER_WORKSPACE/cef
+          
+          energy build -o="cef-amd64.exe"
+          energy package -f="cef-amd64.exe" -o="cef-windows64.exe" -c
+          
+          mv "$RUNNER_WORKSPACE/cef/build/windows/cef-windows64.exe" D:/app/install
+        shell: bash
+
+      - name: Install ENERGY CEF 109-32
+        run: |
+          cd D:/app
+          energy install --all --cef=109 --arch=386
+          energy env
+        shell: bash
+
+      - name: Build and Package 32
+        run: |
+          cd $RUNNER_WORKSPACE/cef
+          
+          energy build -o="cef-32.exe" --arch="386"
+          energy package -f="cef-32.exe" -o="cef-windows32.exe" -c
+          
+          mv "$RUNNER_WORKSPACE/cef/build/windows/cef-windows32.exe" D:/app/install
+        shell: bash
+
+      - name: Build and Package END
+        run: |
+          ls -al D:/app/install/
+        shell: bash
+
+      - name: Release Dynamic library
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: D:/app/install/**
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
