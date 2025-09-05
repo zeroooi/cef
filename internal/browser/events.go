@@ -316,7 +316,7 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 		browser.MainFrame().ExecuteJavaScript(staticScript, "", 0)
 	}
 
-	// 注入动态基础指纹脚本
+	// 注入动态基础指纹脚本 !!!
 	basicScript := h.scriptGenerator.GenerateBasicScript()
 	browser.MainFrame().ExecuteJavaScript(basicScript, "", 0)
 

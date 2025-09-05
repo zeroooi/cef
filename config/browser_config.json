@@ -145,7 +145,7 @@
   },
   "proxy": {
     "mode": "fixed_servers",
-    "url": "0.0.0.0:7890",
+    "url": "111.198.26.17:13128",
     "username": "",
     "password": "",
     "debug": true
