@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        operating-system: [ windows-2019 ]
+        operating-system: [ windows-2022 ]
 
     steps:
       - uses: actions/checkout@v4
