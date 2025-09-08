@@ -57,22 +57,22 @@ jobs:
           mv "$RUNNER_WORKSPACE/cef/build/windows/cef-windows64.exe" D:/app/install
         shell: bash
 
-      - name: Install ENERGY CEF 109-32
-        run: |
-          cd D:/app
-          energy install --all --cef=109 --arch=386
-          energy env
-        shell: bash
-
-      - name: Build and Package 32
-        run: |
-          cd $RUNNER_WORKSPACE/cef
-          
-          energy build -o="cef-32.exe" --arch="386"
-          energy package -f="cef-32.exe" -o="cef-windows32.exe" -c
-          
-          mv "$RUNNER_WORKSPACE/cef/build/windows/cef-windows32.exe" D:/app/install
-        shell: bash
+#      - name: Install ENERGY CEF 109-32
+#        run: |
+#          cd D:/app
+#          energy install --all --cef=109 --arch=386
+#          energy env
+#        shell: bash
+#
+#      - name: Build and Package 32
+#        run: |
+#          cd $RUNNER_WORKSPACE/cef
+#
+#          energy build -o="cef-32.exe" --arch="386"
+#          energy package -f="cef-32.exe" -o="cef-windows32.exe" -c
+#
+#          mv "$RUNNER_WORKSPACE/cef/build/windows/cef-windows32.exe" D:/app/install
+#        shell: bash
 
       - name: Build and Package END
         run: |
