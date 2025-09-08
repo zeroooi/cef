@@ -9,7 +9,8 @@
     "lf3-static.bytednsdoc.com",
     "sf3-fe-tos.pglstatp-toutiao.com",
     "static.oceanengine.com",
-    "analytics.oceanengine.com"
+    "analytics.oceanengine.com",
+    "qianchuan.jinritemai.com"
   ],
   "blocked_message": "访问被限制：该网站不在允许访问列表中",
   "redirect_blocked_to": "https://agent.oceanengine.com/"
