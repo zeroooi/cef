@@ -191,13 +191,13 @@ func (h *EventHandler) DeduplicateHeaders(header *cef.ICefStringMultiMap) *cef.I
 
 // handlePageLoad 处理页面加载完成事件
 func (h *EventHandler) handlePageLoad(browser *cef.ICefBrowser, frame *cef.ICefFrame, httpStatusCode int32, window cef.IBrowserWindow) {
-	currentURL := frame.Url()
+	//currentURL := frame.Url()
 
 	// 检查URL是否被允许访问（优先检查，避免不必要的脚本注入）
-	if currentURL != "" && currentURL != "about:blank" && !h.whitelistValidator.IsURLAllowed(currentURL) {
-		h.handleBlockedURL(browser, currentURL)
-		return
-	}
+	//if currentURL != "" && currentURL != "about:blank" && !h.whitelistValidator.IsURLAllowed(currentURL) {
+	//	h.handleBlockedURL(browser, currentURL)
+	//	return
+	//}
 
 	// 仅对允许的URL进行指纹注入
 	h.injectFingerprintScripts(browser)
