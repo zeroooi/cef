@@ -1,8 +1,8 @@
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/energye/energy/v2 v2.5.6 h1:qoAmeFcXUkp7BzthgDxbQquco9USeO882eMQ4+8q5fs=
-github.com/energye/energy/v2 v2.5.6/go.mod h1:DFBrUQgJK42mkYlRMmew6QOepFr/4wT7aef6la8tQbY=
+github.com/duantiao/energy/v2 v2.0.0-20250910090729-137235145b5f h1:0VfnPvaa3xkz3WbTmecwxwFmJEZvYNouskhKDxcL0+g=
+github.com/duantiao/energy/v2 v2.0.0-20250910090729-137235145b5f/go.mod h1:DFBrUQgJK42mkYlRMmew6QOepFr/4wT7aef6la8tQbY=
 github.com/energye/golcl v1.1.2 h1:iyj0TGuj8S/0h9xPSefzA9vRtQYYJwN0LF0/VDfjUB8=
 github.com/energye/golcl v1.1.2/go.mod h1:0wCrDx7NnHT5+gylUkKi1a9DKYewmMWZQf7xYyZuq9Y=
 github.com/frankban/quicktest v1.14.6 h1:7Xjx+VpznH+oBnejlPUj8oUpdxnVs4f8XU8WnHkI4W8=

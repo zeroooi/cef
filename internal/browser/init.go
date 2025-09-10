@@ -32,7 +32,7 @@ func NewInitializer(
 // Initialize 初始化CEF浏览器
 func (init *Initializer) Initialize() *cef.TCEFApplication {
 	// 创建一个Energy应用程序实例
-	app := cef.NewApplication()
+	app := cef.NewApplication(cef.WithTCEFApplicationEnableInfraProcessOption())
 
 	// 设置全局User-Agent（影响所有HTTP请求）
 	app.SetUserAgent(init.browserConfig.Basic.UserAgent)

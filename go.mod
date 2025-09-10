@@ -26,3 +26,5 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/energye/energy/v2 v2.5.6 => github.com/duantiao/energy/v2 v2.0.0-20250910090729-137235145b5f

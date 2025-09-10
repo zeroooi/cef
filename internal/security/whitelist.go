@@ -30,6 +30,9 @@ func (v *WhitelistValidator) IsURLAllowed(requestURL string) bool {
 		fmt.Printf("URL解析失败: %v\n", err)
 		return false
 	}
+	if parsedURL.Scheme == "bytedance" {
+		return true
+	}
 
 	// 获取域名并转换为小写
 	hostname := strings.ToLower(parsedURL.Hostname())
