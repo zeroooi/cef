@@ -3,9 +3,10 @@
 package config
 
 import (
+	"bytes"
+	"embed"
 	"errors"
 	"fmt"
-
 	"github.com/spf13/viper"
 )
 
@@ -13,13 +14,15 @@ import (
 type Loader struct {
 	browserConfig   *BrowserConfig
 	whitelistConfig *WhitelistConfig
+	Cfg             *embed.FS
 }
 
 // NewLoader 创建新的配置加载器实例
-func NewLoader() *Loader {
+func NewLoader(cfg *embed.FS) *Loader {
 	return &Loader{
 		browserConfig:   &BrowserConfig{},
 		whitelistConfig: &WhitelistConfig{},
+		Cfg:             cfg,
 	}
 }
 
@@ -45,12 +48,13 @@ func (l *Loader) LoadAll() error {
 func (l *Loader) LoadBrowserConfig() error {
 	// 创建Viper实例用于浏览器配置
 	v := viper.New()
-	v.SetConfigName("browser_config") // 配置文件名（不包含扩展名）
-	v.SetConfigType("json")           // 配置文件类型
-	v.AddConfigPath("./config")       // 配置文件路径
+	//v.SetConfigName("browser_config") // 配置文件名（不包含扩展名）
+	v.SetConfigType("json") // 配置文件类型
+	//v.AddConfigPath("./config")       // 配置文件路径
 
-	// 先读取配置文件，再设置默认值
-	if err := v.ReadInConfig(); err != nil {
+	configData, _ := l.Cfg.ReadFile("config/browser_config.json")
+	//先读取配置文件，再设置默认值
+	if err := v.ReadConfig(bytes.NewReader(configData)); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if errors.As(err, &configFileNotFoundError) {
 			// 配置文件不存在，使用默认值
@@ -79,17 +83,18 @@ func (l *Loader) LoadBrowserConfig() error {
 func (l *Loader) LoadWhitelistConfig() error {
 	// 创建Viper实例用于白名单配置
 	v := viper.New()
-	v.SetConfigName("whitelist") // 配置文件名（不包含扩展名）
-	v.SetConfigType("json")      // 配置文件类型
-	v.AddConfigPath("./config")  // 配置文件路径
+	//v.SetConfigName("whitelist") // 配置文件名（不包含扩展名）
+	v.SetConfigType("json") // 配置文件类型
+	//v.AddConfigPath("./config")  // 配置文件路径
 
+	configData, _ := l.Cfg.ReadFile("config/whitelist.json")
 	// 设置默认值
 	v.SetDefault("allowed_domains", []string{"google.com", "agent.oceanengine.com", "accounts.google.com"})
 	v.SetDefault("blocked_message", "访问被限制：该网站不在允许访问列表中")
 	v.SetDefault("redirect_blocked_to", "https://agent.oceanengine.com/")
 
 	// 读取配置文件
-	if err := v.ReadInConfig(); err != nil {
+	if err := v.ReadConfig(bytes.NewReader(configData)); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if errors.As(err, &configFileNotFoundError) {
 			// 配置文件不存在，使用默认值
@@ -174,6 +179,12 @@ func (l *Loader) setDefaultBrowserConfig(v *viper.Viper) {
 	v.SetDefault("headers.cache_control", "no-cache")
 	v.SetDefault("headers.pragma", "no-cache")
 	v.SetDefault("headers.x_sw_cache", "7")
+
+	//v.SetDefault("proxy.mode", "fixed_servers")
+	//v.SetDefault("proxy.url", "111.198.26.17:13128")
+	//v.SetDefault("proxy.username", "xy_liuliang_tool_01")
+	//v.SetDefault("proxy.password", "xy_liuliang_tool_01")
+	//v.SetDefault("proxy.debug", true)
 }
 
 // setFallbackBrowserConfig 设置降级浏览器配置（当Unmarshal失败时使用）

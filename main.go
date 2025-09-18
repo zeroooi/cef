@@ -20,10 +20,13 @@ import (
 //go:embed resources
 var resources embed.FS
 
+//go:embed config
+var cfg embed.FS
+
 // 应用程序主入口函数
 func main() {
 	// 1. 加载配置文件
-	configLoader := config.NewLoader()
+	configLoader := config.NewLoader(&cfg)
 	if err := configLoader.LoadAll(); err != nil {
 		log.Fatalf("配置加载失败: %v", err)
 	}
