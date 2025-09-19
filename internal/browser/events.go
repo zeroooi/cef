@@ -6,8 +6,13 @@ import (
 	"cef/internal/config"
 	"cef/internal/fingerprint"
 	"cef/internal/security"
+	"fmt"
+	"net/url"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
+	"unsafe"
 
 	"github.com/energye/energy/v2/cef"
 	"github.com/energye/energy/v2/cef/ipc"
@@ -21,12 +26,14 @@ var needRemoveHeaderKey = []string{"DNT"}
 
 // EventHandler 浏览器事件处理器
 type EventHandler struct {
+	lock               sync.RWMutex
 	browserConfig      *config.BrowserConfig
 	whitelistValidator *security.WhitelistValidator
 	scriptManager      *fingerprint.ScriptManager
 	scriptGenerator    *fingerprint.Generator
 	lastRedirectURL    string // 最后一次重定向的URL，用于防止循环
 	redirectCount      int    // 重定向次数计数器
+	currentAccount     string // 当前账户
 }
 
 // NewEventHandler 创建新的事件处理器实例
@@ -126,6 +133,42 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 			return true
 		}
 		return false
+	})
+
+	event.SetOnLoadStart(func(sender lcl.IObject, browser *cef.ICefBrowser, frame *cef.ICefFrame, transitionType consts.TCefTransitionType, window cef.IBrowserWindow) {
+		if currentUrl, _ := url.Parse(frame.Url()); currentUrl.Host != "agent.oceanengine.com" {
+			return
+		}
+		window.Chromium().SetOnGetResourceResponseFilter(func(sender lcl.IObject, browser *cef.ICefBrowser, frame *cef.ICefFrame, request *cef.ICefRequest, response *cef.ICefResponse) (responseFilter *cef.ICefResponseFilter) {
+			if !strings.Contains(request.URL(), "/user-info") {
+				return nil
+			}
+			filter := cef.ResponseFilterRef.New()
+			filter.InitFilter(func() bool {
+				return true
+			})
+			filter.Filter(func(dataIn uintptr, dataInSize uint32, dataInRead *uint32, dataOut uintptr, dataOutSize uint32, dataOutWritten *uint32) (status consts.TCefResponseFilterStatus) {
+				status = consts.RESPONSE_FILTER_DONE
+				if dataIn == 0 {
+					return
+				}
+				contentBuf := make([]byte, dataInSize)
+				i := uint32(0)
+				for ; i < dataInSize; i++ {
+					contentBuf[i] = *(*byte)(unsafe.Pointer(dataIn + uintptr(i)))
+				}
+				*dataInRead = dataInSize
+				if matched := regexp.MustCompile(`(?U)"email":"([[:graph:]]+)"`).FindSubmatch(contentBuf); len(matched) >= 2 {
+					h.setCurrentAccount(string(matched[1]))
+				}
+				for i = 0; i < dataInSize; i++ {
+					*(*byte)(unsafe.Pointer(dataOut + uintptr(i))) = contentBuf[i]
+				}
+				*dataOutWritten = i
+				return
+			})
+			return filter
+		})
 	})
 }
 
@@ -378,6 +421,20 @@ func (h *EventHandler) sendSystemInfo(window cef.IBrowserWindow) {
 	// 通过IPC将窗口类型信息发送给前端JavaScript
 	// 前端可以通过ipc.on("windowType", function(type){...})接收这个信息
 	ipc.Emit("windowType", windowType)
+}
+
+func (h *EventHandler) setCurrentAccount(account string) {
+	h.lock.Lock()
+	fmt.Println("setCurrentAccount", account)
+	h.currentAccount = account
+	h.lock.Unlock()
+}
+
+func (h *EventHandler) getCurrentAccount() (account string) {
+	h.lock.RLock()
+	account = h.currentAccount
+	h.lock.RUnlock()
+	return
 }
 
 // UpdateConfigs 更新配置（运行时热更新）
