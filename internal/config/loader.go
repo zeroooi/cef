@@ -227,7 +227,7 @@ func (l *Loader) setFallbackBrowserConfig(v *viper.Viper) {
 	l.browserConfig.WebRTC.BlockDataChannels = v.GetBool("webrtc.block_data_channels")
 
 	l.browserConfig.App.DefaultURL = v.GetString("app.default_url")
-	l.browserConfig.App.WindowTitle = v.GetString("app.window_title")
+	l.browserConfig.App.WindowTitle = fmt.Sprintf("%s - %s", v.GetString("app.window_title"), v.GetString("app.version"))
 
 	// 加载HTTP头部配置
 	l.browserConfig.Headers.SecChUa = v.GetString("headers.sec_ch_ua")
