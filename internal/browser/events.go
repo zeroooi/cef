@@ -26,14 +26,15 @@ var needRemoveHeaderKey = []string{"DNT"}
 
 // EventHandler 浏览器事件处理器
 type EventHandler struct {
-	lock               sync.RWMutex
-	browserConfig      func(...string) *config.BrowserConfig
-	whitelistValidator *security.WhitelistValidator
-	scriptManager      *fingerprint.ScriptManager
-	scriptGenerator    *fingerprint.Generator
-	lastRedirectURL    string // 最后一次重定向的URL，用于防止循环
-	redirectCount      int    // 重定向次数计数器
-	currentAccount     string // 当前账户
+	lock                    sync.RWMutex
+	browserConfig           func(...string) *config.BrowserConfig
+	whitelistValidator      *security.WhitelistValidator
+	scriptManager           *fingerprint.ScriptManager
+	scriptGenerator         *fingerprint.Generator
+	lastRedirectURL         string // 最后一次重定向的URL，用于防止循环
+	redirectCount           int    // 重定向次数计数器
+	currentAccount          string // 当前账户
+	notifyAccountChangeChan chan<- string
 }
 
 // NewEventHandler 创建新的事件处理器实例
@@ -42,12 +43,14 @@ func NewEventHandler(
 	whitelistValidator *security.WhitelistValidator,
 	scriptManager *fingerprint.ScriptManager,
 	scriptGenerator *fingerprint.Generator,
+	notifyAccountChangeChan chan string,
 ) *EventHandler {
 	return &EventHandler{
-		browserConfig:      browserConfig,
-		whitelistValidator: whitelistValidator,
-		scriptManager:      scriptManager,
-		scriptGenerator:    scriptGenerator,
+		browserConfig:           browserConfig,
+		whitelistValidator:      whitelistValidator,
+		scriptManager:           scriptManager,
+		scriptGenerator:         scriptGenerator,
+		notifyAccountChangeChan: notifyAccountChangeChan,
 	}
 }
 
@@ -68,6 +71,9 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 
 		// 从UA中提取平台信息
 		userAgent := h.browserConfig(h.getCurrentAccount()).Basic.UserAgent
+		if userAgent != "" {
+			request.SetHeaderByName("User-Agent", userAgent, true)
+		}
 		var platformValue string
 
 		if strings.Contains(userAgent, "Windows") {
@@ -233,6 +239,7 @@ func (h *EventHandler) DeduplicateHeaders(header *cef.ICefStringMultiMap) *cef.I
 }
 
 func (h *EventHandler) Close() {
+	close(h.notifyAccountChangeChan)
 	//os.RemoveAll("temp")
 }
 
@@ -285,16 +292,17 @@ func (h *EventHandler) handleBlockedURL(browser *cef.ICefBrowser, currentURL str
 
 // injectFingerprintScripts 注入指纹伪装脚本
 func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
+	targetFrame := browser.MainFrame()
 	// 注入HTTP头部修复脚本
 	headersFixScript := h.scriptManager.GetHeadersFixScript()
 	if headersFixScript != "" {
-		browser.MainFrame().ExecuteJavaScript(headersFixScript, "", 0)
+		targetFrame.ExecuteJavaScript(headersFixScript, "", 0)
 	}
 
 	// 注入WebSocket修复脚本
 	websocketFixScript := h.scriptManager.GetWebSocketFixScript()
 	if websocketFixScript != "" {
-		browser.MainFrame().ExecuteJavaScript(websocketFixScript, "", 0)
+		targetFrame.ExecuteJavaScript(websocketFixScript, "", 0)
 	}
 
 	// 注入CORS禁用脚本（在指纹脚本之前）
@@ -350,29 +358,29 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 		
 		console.log('CORS 禁用和 WebSocket 增强设置完成');
 	`
-	browser.MainFrame().ExecuteJavaScript(corsScript, "", 0)
+	targetFrame.ExecuteJavaScript(corsScript, "", 0)
 
 	// 最简单的测试脚本 - 确保JavaScript执行正常
 	ultraSimpleTest := `console.log('🔥 JavaScript执行测试 - 成功！');`
-	browser.MainFrame().ExecuteJavaScript(ultraSimpleTest, "", 0)
+	targetFrame.ExecuteJavaScript(ultraSimpleTest, "", 0)
 
 	// 注入静态指纹脚本
 	if h.scriptManager.IsScriptLoaded() {
 		staticScript := h.scriptManager.GetStaticScript()
-		browser.MainFrame().ExecuteJavaScript(staticScript, "", 0)
+		targetFrame.ExecuteJavaScript(staticScript, "", 0)
 	}
 
-	browser.MainFrame().ExecuteJavaScript(`console.log('开始注入动态基础指纹脚本');`, "", 0)
+	targetFrame.ExecuteJavaScript(`console.log('开始注入动态基础指纹脚本');`, "", 0)
 	// 注入动态基础指纹脚本 !!!
 	basicScript := h.scriptGenerator.GenerateBasicScript(h.getCurrentAccount())
-	browser.MainFrame().ExecuteJavaScript(basicScript, "", 0)
-	browser.MainFrame().ExecuteJavaScript(`console.log('结束注入动态基础指纹脚本');`, "", 0)
+	targetFrame.ExecuteJavaScript(basicScript, "", 0)
+	targetFrame.ExecuteJavaScript(`console.log('结束注入动态基础指纹脚本');`, "", 0)
 
 	// 注入高级指纹脚本
-	browser.MainFrame().ExecuteJavaScript(`console.log('开始注入高级指纹脚本');`, "", 0)
+	targetFrame.ExecuteJavaScript(`console.log('开始注入高级指纹脚本');`, "", 0)
 	advancedScript := h.scriptGenerator.GenerateAdvancedScript(h.getCurrentAccount())
-	browser.MainFrame().ExecuteJavaScript(advancedScript, "", 0)
-	browser.MainFrame().ExecuteJavaScript(`console.log('结束注入高级指纹脚本');`, "", 0)
+	targetFrame.ExecuteJavaScript(advancedScript, "", 0)
+	targetFrame.ExecuteJavaScript(`console.log('结束注入高级指纹脚本');`, "", 0)
 
 	// 验证脚本 - 检查关键指标
 	verificationScript := `
@@ -401,7 +409,7 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 		console.log('🔍 === 验证完成 ===');
 	}, 1000);
 	`
-	browser.MainFrame().ExecuteJavaScript(verificationScript, "", 0)
+	targetFrame.ExecuteJavaScript(verificationScript, "", 0)
 }
 
 // sendSystemInfo 发送系统信息到前端
@@ -431,9 +439,15 @@ func (h *EventHandler) sendSystemInfo(window cef.IBrowserWindow) {
 }
 
 func (h *EventHandler) setCurrentAccount(account string) {
+	if account == "" {
+		return
+	}
 	h.lock.Lock()
 	defer h.lock.Unlock()
-	h.currentAccount = account
+	if account != h.currentAccount {
+		h.notifyAccountChangeChan <- account
+		h.currentAccount = account
+	}
 	//if err := os.MkdirAll("temp", 0750); err != nil {
 	//	fmt.Printf("Mkdir temp failed, %v\n", err)
 	//} else {

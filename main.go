@@ -52,12 +52,14 @@ func main() {
 	scriptGenerator := fingerprint.NewGenerator(browserConfigLoader)
 	log.Println("指纹伪装模块初始化完成")
 
+	notifyAccountChangeChan := make(chan string, 1)
 	// 4. 初始化浏览器事件处理器
 	eventHandler := browser.NewEventHandler(
 		browserConfigLoader,
 		whitelistValidator,
 		scriptManager,
 		scriptGenerator,
+		notifyAccountChangeChan,
 	)
 	defer eventHandler.Close()
 
@@ -71,6 +73,21 @@ func main() {
 	cef.GlobalInit(nil, &resources)
 	cef.BrowserWindow.Config.IconFS = "resources/icon.png"
 	app := browserInit.Initialize()
+
+	//go func() {
+	//	for account := range notifyAccountChangeChan {
+	//		fmt.Println("收到AccountChange信息， account:", account)
+	//		browserConfig := browserConfigLoader(account)
+	//		fmt.Println("开始设置app.SetUserAgent:", browserConfig.Basic.UserAgent)
+	//		// 设置全局User-Agent（影响所有HTTP请求）
+	//		app.SetUserAgent(browserConfig.Basic.UserAgent)
+	//
+	//		// 设置平台信息
+	//		//app.AddCustomCommandLine("--user-agent", browserConfig.Basic.UserAgent)
+	//		fmt.Println("成功设置app.SetUserAgent")
+	//	}
+	//	fmt.Println("notifyAccountChangeChan关闭")
+	//}()
 
 	log.Println("启动 CEF 应用...")
 	// 6. 启动并运行应用程序
