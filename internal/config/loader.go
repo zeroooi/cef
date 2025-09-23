@@ -4,10 +4,15 @@ package config
 
 import (
 	"bytes"
+	"cef/config"
+	"cef/pkg/external/aegis"
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
+	"time"
 )
 
 // Loader 配置加载器
@@ -15,6 +20,8 @@ type Loader struct {
 	browserConfig   *BrowserConfig
 	whitelistConfig *WhitelistConfig
 	Cfg             *embed.FS
+	ExternalConfig  ExternalConfig
+	cache           *cache.Cache
 }
 
 // NewLoader 创建新的配置加载器实例
@@ -23,6 +30,7 @@ func NewLoader(cfg *embed.FS) *Loader {
 		browserConfig:   &BrowserConfig{},
 		whitelistConfig: &WhitelistConfig{},
 		Cfg:             cfg,
+		cache:           cache.New(24*time.Hour, 10*time.Minute),
 	}
 }
 
@@ -36,6 +44,10 @@ func (l *Loader) LoadAll() error {
 	// 加载白名单配置
 	if err := l.LoadWhitelistConfig(); err != nil {
 		return fmt.Errorf("加载白名单配置失败: %v", err)
+	}
+
+	if err := l.LoadExternalConfig(); err != nil {
+		return fmt.Errorf("加载外部配置失败: %v", err)
 	}
 
 	fmt.Println("配置加载完成")
@@ -114,6 +126,10 @@ func (l *Loader) LoadWhitelistConfig() error {
 	return nil
 }
 
+func (l *Loader) LoadExternalConfig() error {
+	return json.Unmarshal(config.ExternalConfig, &l.ExternalConfig)
+}
+
 // GetBrowserConfig 获取浏览器配置
 func (l *Loader) GetBrowserConfig() *BrowserConfig {
 	return l.browserConfig
@@ -122,6 +138,42 @@ func (l *Loader) GetBrowserConfig() *BrowserConfig {
 // GetWhitelistConfig 获取白名单配置
 func (l *Loader) GetWhitelistConfig() *WhitelistConfig {
 	return l.whitelistConfig
+}
+
+func (l *Loader) GetBrowserConfigLoader() func(...string) *BrowserConfig {
+	serviceName := "browser-config"
+	return func(account ...string) *BrowserConfig {
+		if len(account) > 0 && account[0] != "" {
+			cacheKey := serviceName + "/" + account[0]
+			if cacheVal, exist := l.cache.Get(cacheKey); exist {
+				return cacheVal.(*BrowserConfig)
+			}
+			var browserConfigResp GetBrowserConfigResponse
+			if err := aegis.DefaultClient().GetConfigWithResult(serviceName, &browserConfigResp, account[0]); err == nil && browserConfigResp.Code == 0 && len(browserConfigResp.Data.ConfigMap) > 0 {
+				l.cache.SetDefault(cacheKey, browserConfigResp.Data.ConfigMap[account[0]])
+				return browserConfigResp.Data.ConfigMap[account[0]]
+			}
+		}
+		return l.browserConfig
+	}
+}
+
+func (l *Loader) GetWhitelistConfigLoader() func(account ...string) *WhitelistConfig {
+	serviceName := "whitelist-config"
+	return func(account ...string) *WhitelistConfig {
+		if len(account) > 0 && account[0] != "" {
+			cacheKey := serviceName + "/" + account[0]
+			if cacheVal, exist := l.cache.Get(cacheKey); exist {
+				return cacheVal.(*WhitelistConfig)
+			}
+			var whitelistConfigResp GetWhitelistConfigResponse
+			if err := aegis.DefaultClient().GetConfigWithResult(serviceName, &whitelistConfigResp, account[0]); err == nil && whitelistConfigResp.Code == 0 && len(whitelistConfigResp.Data.ConfigMap) > 0 {
+				l.cache.SetDefault(cacheKey, whitelistConfigResp.Data.ConfigMap[account[0]])
+				return whitelistConfigResp.Data.ConfigMap[account[0]]
+			}
+		}
+		return l.whitelistConfig
+	}
 }
 
 // setDefaultBrowserConfig 设置浏览器配置的默认值

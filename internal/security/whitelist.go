@@ -11,11 +11,11 @@ import (
 
 // WhitelistValidator 白名单验证器
 type WhitelistValidator struct {
-	config *config.WhitelistConfig
+	config func(...string) *config.WhitelistConfig
 }
 
 // NewWhitelistValidator 创建新的白名单验证器实例
-func NewWhitelistValidator(cfg *config.WhitelistConfig) *WhitelistValidator {
+func NewWhitelistValidator(cfg func(...string) *config.WhitelistConfig) *WhitelistValidator {
 	return &WhitelistValidator{
 		config: cfg,
 	}
@@ -23,7 +23,7 @@ func NewWhitelistValidator(cfg *config.WhitelistConfig) *WhitelistValidator {
 
 // IsURLAllowed 检查URL是否被允许访问
 // 支持精确匹配和子域名匹配两种模式
-func (v *WhitelistValidator) IsURLAllowed(requestURL string) bool {
+func (v *WhitelistValidator) IsURLAllowed(requestURL string, account ...string) bool {
 	// 解析URL
 	parsedURL, err := url.Parse(requestURL)
 	if err != nil {
@@ -38,7 +38,7 @@ func (v *WhitelistValidator) IsURLAllowed(requestURL string) bool {
 	hostname := strings.ToLower(parsedURL.Hostname())
 
 	// 检查是否在白名单中
-	for _, allowedDomain := range v.config.AllowedDomains {
+	for _, allowedDomain := range v.config(account...).AllowedDomains {
 		allowedDomain = strings.ToLower(allowedDomain)
 
 		// 支持精确匹配和子域名匹配
@@ -52,26 +52,27 @@ func (v *WhitelistValidator) IsURLAllowed(requestURL string) bool {
 
 // GetBlockedMessage 获取访问被阻止时的消息
 func (v *WhitelistValidator) GetBlockedMessage() string {
-	return v.config.BlockedMessage
+	return v.config().BlockedMessage
 }
 
 // GetRedirectURL 获取被阻止时的重定向URL
 func (v *WhitelistValidator) GetRedirectURL() string {
-	return v.config.RedirectBlockedTo
+	return v.config().RedirectBlockedTo
 }
 
 // LogBlockedAccess 记录被阻止的访问尝试
 func (v *WhitelistValidator) LogBlockedAccess(requestURL string) {
-	fmt.Printf("访问被阻止 - URL: %s, 消息: %s\n", requestURL, v.config.BlockedMessage)
+	fmt.Printf("访问被阻止 - URL: %s, 消息: %s\n", requestURL, v.config().BlockedMessage)
 }
 
 // GetAllowedDomains 获取允许访问的域名列表（用于调试）
 func (v *WhitelistValidator) GetAllowedDomains() []string {
-	return v.config.AllowedDomains
+	return v.config().AllowedDomains
 }
 
 // UpdateConfig 更新白名单配置（运行时热更新）
-func (v *WhitelistValidator) UpdateConfig(newConfig *config.WhitelistConfig) {
+// Deprecated
+func (v *WhitelistValidator) UpdateConfig(newConfig func(...string) *config.WhitelistConfig) {
 	v.config = newConfig
-	fmt.Printf("白名单配置已更新，当前允许域名数量: %d\n", len(v.config.AllowedDomains))
+	fmt.Printf("白名单配置已更新，当前允许域名数量: %d\n", len(v.config().AllowedDomains))
 }

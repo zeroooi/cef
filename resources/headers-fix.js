@@ -110,7 +110,7 @@
                         
                         // 获取当前已存在的头部值（如果有的话）
                         if (this._requestHeaders && this._requestHeaders[headerName.toLowerCase()]) {
-                            console.log(`🔍 ${headerName} 已在记录中，跳过设置`);
+                            // console.log(`🔍 ${headerName} 已在记录中，跳过设置`);
                             shouldSet = false;
                         }
                         
@@ -169,7 +169,7 @@
                         headersObj[headerName] = targetValue;
                         console.log(` Fetch添加JS控制的头部 ${headerName}: ${targetValue}`);
                     } else {
-                        console.log(` Fetch跳过已存在的头部 ${headerName}: ${headersObj[existingHeader]}`);
+                        // console.log(` Fetch跳过已存在的头部 ${headerName}: ${headersObj[existingHeader]}`);
                     }
                 } else {
                     console.log(` Fetch跳过CEF控制的头部 ${headerName}`);
@@ -254,7 +254,7 @@
         const observer = new PerformanceObserver((list) => {
             list.getEntries().forEach((entry) => {
                 if (entry.entryType === 'navigation' || entry.entryType === 'resource') {
-                    console.log(` 网络请求: ${entry.name}`);
+                    // console.log(` 网络请求: ${entry.name}`);
                 }
             });
         });

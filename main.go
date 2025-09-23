@@ -3,15 +3,14 @@
 package main
 
 import (
-	"embed" // Go内置的文件嵌入功能
-	"log"   // 日志记录
-
 	"cef/internal/browser"     // 浏览器初始化和事件处理
 	"cef/internal/config"      // 配置管理
 	"cef/internal/fingerprint" // 指纹伪装
 	"cef/internal/security"    // 安全控制（白名单等）
-
+	"cef/pkg/external/aegis"
+	"embed"                            // Go内置的文件嵌入功能
 	"github.com/energye/energy/v2/cef" // Energy CEF核心包
+	"log"                              // 日志记录
 )
 
 // 使用Go的embed指令将resources目录下的所有文件嵌入到程序中
@@ -32,12 +31,14 @@ func main() {
 	}
 	log.Println("配置加载成功")
 
+	aegis.SetDefault(aegis.NewAegisClient(configLoader.ExternalConfig.AegisAddr.Mode))
+
 	// 获取配置实例
-	browserConfig := configLoader.GetBrowserConfig()
-	whitelistConfig := configLoader.GetWhitelistConfig()
+	browserConfigLoader := configLoader.GetBrowserConfigLoader()
+	whitelistConfigLoader := configLoader.GetWhitelistConfigLoader()
 
 	// 2. 初始化安全控制模块
-	whitelistValidator := security.NewWhitelistValidator(whitelistConfig)
+	whitelistValidator := security.NewWhitelistValidator(whitelistConfigLoader)
 	log.Println("安全控制模块初始化完成")
 
 	// 3. 初始化指纹伪装模块
@@ -48,20 +49,22 @@ func main() {
 		log.Println("指纹伪装脚本加载成功")
 	}
 
-	scriptGenerator := fingerprint.NewGenerator(browserConfig)
+	scriptGenerator := fingerprint.NewGenerator(browserConfigLoader)
 	log.Println("指纹伪装模块初始化完成")
 
 	// 4. 初始化浏览器事件处理器
 	eventHandler := browser.NewEventHandler(
-		browserConfig,
+		browserConfigLoader,
 		whitelistValidator,
 		scriptManager,
 		scriptGenerator,
 	)
+	defer eventHandler.Close()
+
 	log.Println("浏览器事件处理器初始化完成")
 
 	// 5. 初始化浏览器
-	browserInit := browser.NewInitializer(&resources, browserConfig, eventHandler)
+	browserInit := browser.NewInitializer(&resources, browserConfigLoader(), eventHandler)
 
 	log.Println("正在初始化 CEF 浏览器...")
 	// 初始化CEF框架（只能调用一次）

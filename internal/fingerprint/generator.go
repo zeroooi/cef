@@ -10,22 +10,22 @@ import (
 
 // Generator 指纹脚本生成器
 type Generator struct {
-	browserConfig *config.BrowserConfig
+	browserConfig func(...string) *config.BrowserConfig
 }
 
 // NewGenerator 创建新的脚本生成器实例
-func NewGenerator(browserConfig *config.BrowserConfig) *Generator {
+func NewGenerator(browserConfig func(...string) *config.BrowserConfig) *Generator {
 	return &Generator{
 		browserConfig: browserConfig,
 	}
 }
 
 // GenerateBasicScript 根据配置文件参数创建完整的浏览器指纹伪装脚本
-func (g *Generator) GenerateBasicScript() string {
+func (g *Generator) GenerateBasicScript(account ...string) string {
 	// 从配置中提取主语言
-	primaryLanguage := g.extractPrimaryLanguage()
+	primaryLanguage := g.extractPrimaryLanguage(account...)
 	// 从配置中生成语言数组
-	languagesArray := g.generateLanguagesArray()
+	languagesArray := g.generateLanguagesArray(account...)
 
 	return `
 
@@ -37,14 +37,14 @@ window.fingerprintData = {};
 // 目标配置 - 精确匹配测试页面期望值
 if (!window.__fingerprintConfig) {
     window.__fingerprintConfig = {
-        userAgent: '` + g.browserConfig.Basic.UserAgent + `',
-        platform: '` + g.browserConfig.Basic.Platform + `',
-        hardwareConcurrency: ` + fmt.Sprintf("%d", g.browserConfig.Hardware.CPUCores) + `,
+        userAgent: '` + g.browserConfig(account...).Basic.UserAgent + `',
+        platform: '` + g.browserConfig(account...).Basic.Platform + `',
+        hardwareConcurrency: ` + fmt.Sprintf("%d", g.browserConfig(account...).Hardware.CPUCores) + `,
         language: '` + primaryLanguage + `',
         languages: ` + languagesArray + `,
-        screenWidth: ` + fmt.Sprintf("%d", g.browserConfig.Screen.Width) + `,
-        screenHeight: ` + fmt.Sprintf("%d", g.browserConfig.Screen.Height) + `,
-        devicePixelRatio: ` + fmt.Sprintf("%.1f", g.browserConfig.Screen.DevicePixelRatio) + `
+        screenWidth: ` + fmt.Sprintf("%d", g.browserConfig(account...).Screen.Width) + `,
+        screenHeight: ` + fmt.Sprintf("%d", g.browserConfig(account...).Screen.Height) + `,
+        devicePixelRatio: ` + fmt.Sprintf("%.1f", g.browserConfig(account...).Screen.DevicePixelRatio) + `
     };
     console.log('🎯 系统性修复配置:', window.__fingerprintConfig);
 }
@@ -52,11 +52,11 @@ if (!window.__fingerprintConfig) {
 }
 
 // GenerateAdvancedScript 创建高级指纹伪装脚本（Canvas、WebGL、音频等）
-func (g *Generator) GenerateAdvancedScript() string {
+func (g *Generator) GenerateAdvancedScript(account ...string) string {
 	return `
 (function() {
     // ========== Canvas指纹伪装 ==========
-    if (` + fmt.Sprintf("%v", g.browserConfig.Canvas.EnableNoise) + `) {
+    if (` + fmt.Sprintf("%v", g.browserConfig(account...).Canvas.EnableNoise) + `) {
         try {
             // Canvas 2D指纹伪装
             const originalGetImageData = CanvasRenderingContext2D.prototype.getImageData;
@@ -65,7 +65,7 @@ func (g *Generator) GenerateAdvancedScript() string {
                 
                 // 添加微小噪声
                 const data = imageData.data;
-                const noiseLevel = ` + fmt.Sprintf("%.6f", g.browserConfig.Canvas.NoiseLevel) + `;
+                const noiseLevel = ` + fmt.Sprintf("%.6f", g.browserConfig(account...).Canvas.NoiseLevel) + `;
                 
                 for (let i = 0; i < data.length; i += 4) {
                     const noise = (Math.random() - 0.5) * noiseLevel * 255;
@@ -108,10 +108,10 @@ func (g *Generator) GenerateAdvancedScript() string {
         
         // 目标WebGL配置 - 更全面的参数伪装
         const webglConfig = {
-            [VENDOR]: '` + g.browserConfig.WebGL.Vendor + `',
-            [RENDERER]: '` + g.browserConfig.WebGL.Renderer + `',
-            [VERSION]: '` + g.browserConfig.WebGL.Version + `',
-            [SHADING_LANGUAGE_VERSION]: '` + g.browserConfig.WebGL.ShadingLanguageVersion + `',
+            [VENDOR]: '` + g.browserConfig(account...).WebGL.Vendor + `',
+            [RENDERER]: '` + g.browserConfig(account...).WebGL.Renderer + `',
+            [VERSION]: '` + g.browserConfig(account...).WebGL.Version + `',
+            [SHADING_LANGUAGE_VERSION]: '` + g.browserConfig(account...).WebGL.ShadingLanguageVersion + `',
             // 额外的常见参数
             0x8B8A: 1, // MAX_VERTEX_ATTRIBS
             0x8DFB: 16, // MAX_TEXTURE_IMAGE_UNITS
@@ -191,7 +191,7 @@ func (g *Generator) GenerateAdvancedScript() string {
     }
     
     // ========== 音频指纹伪装 ==========
-    if (` + fmt.Sprintf("%v", g.browserConfig.Audio.EnableNoise) + `) {
+    if (` + fmt.Sprintf("%v", g.browserConfig(account...).Audio.EnableNoise) + `) {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             if (AudioContext) {
@@ -200,7 +200,7 @@ func (g *Generator) GenerateAdvancedScript() string {
                     const result = originalGetFloatFrequencyData.apply(this, arguments);
                     
                     // 添加微小噪声
-                    const noiseLevel = ` + fmt.Sprintf("%.6f", g.browserConfig.Audio.NoiseLevel) + `;
+                    const noiseLevel = ` + fmt.Sprintf("%.6f", g.browserConfig(account...).Audio.NoiseLevel) + `;
                     for (let i = 0; i < array.length; i++) {
                         array[i] += (Math.random() - 0.5) * noiseLevel;
                     }
@@ -240,7 +240,7 @@ func (g *Generator) GenerateAdvancedScript() string {
     }
     
     // ========== WebRTC IP泄露防护 ==========
-    if (` + fmt.Sprintf("%v", g.browserConfig.WebRTC.BlockLocalIPLeak) + `) {
+    if (` + fmt.Sprintf("%v", g.browserConfig(account...).WebRTC.BlockLocalIPLeak) + `) {
         try {
             const originalRTCPeerConnection = RTCPeerConnection;
             window.RTCPeerConnection = function(config) {
@@ -307,14 +307,14 @@ func (g *Generator) GenerateAdvancedScript() string {
     // ========== 字体指纹伪装 ==========
     try {
         // 字体检测伪装
-        const availableFonts = ` + fmt.Sprintf("%q", g.browserConfig.Fonts.AvailableFonts) + `;
+        const availableFonts = ` + fmt.Sprintf("%q", g.browserConfig(account...).Fonts.AvailableFonts) + `;
         
         // 拦截字体测量方法
         const originalMeasureText = CanvasRenderingContext2D.prototype.measureText;
         CanvasRenderingContext2D.prototype.measureText = function(text) {
             const result = originalMeasureText.apply(this, arguments);
             
-            if (` + fmt.Sprintf("%v", g.browserConfig.Fonts.FontRandomization) + `) {
+            if (` + fmt.Sprintf("%v", g.browserConfig(account...).Fonts.FontRandomization) + `) {
                 // 添加微小的随机变化
                 result.width += (Math.random() - 0.5) * 0.1;
             }
@@ -485,27 +485,27 @@ func (g *Generator) GenerateAdvancedScript() string {
 }
 
 // UpdateConfig 更新配置（运行时热更新）
-func (g *Generator) UpdateConfig(newConfig *config.BrowserConfig) {
-	g.browserConfig = newConfig
-}
+//func (g *Generator) UpdateConfig(newConfig *config.BrowserConfig) {
+//	g.browserConfig = newConfig
+//}
 
 // GetConfigSummary 获取当前配置摘要（用于调试）
-func (g *Generator) GetConfigSummary() map[string]interface{} {
+func (g *Generator) GetConfigSummary(account ...string) map[string]interface{} {
 	return map[string]interface{}{
-		"user_agent":     g.browserConfig.Basic.UserAgent,
-		"timezone":       g.browserConfig.Basic.Timezone,
-		"screen_size":    fmt.Sprintf("%dx%d", g.browserConfig.Screen.Width, g.browserConfig.Screen.Height),
-		"canvas_noise":   g.browserConfig.Canvas.EnableNoise,
-		"audio_noise":    g.browserConfig.Audio.EnableNoise,
-		"webrtc_blocked": g.browserConfig.WebRTC.BlockLocalIPLeak,
-		"cpu_cores":      g.browserConfig.Hardware.CPUCores,
-		"device_memory":  g.browserConfig.Hardware.DeviceMemory,
+		"user_agent":     g.browserConfig(account...).Basic.UserAgent,
+		"timezone":       g.browserConfig(account...).Basic.Timezone,
+		"screen_size":    fmt.Sprintf("%dx%d", g.browserConfig(account...).Screen.Width, g.browserConfig(account...).Screen.Height),
+		"canvas_noise":   g.browserConfig(account...).Canvas.EnableNoise,
+		"audio_noise":    g.browserConfig(account...).Audio.EnableNoise,
+		"webrtc_blocked": g.browserConfig(account...).WebRTC.BlockLocalIPLeak,
+		"cpu_cores":      g.browserConfig(account...).Hardware.CPUCores,
+		"device_memory":  g.browserConfig(account...).Hardware.DeviceMemory,
 	}
 }
 
 // extractPrimaryLanguage 从AcceptLanguage配置中提取主语言
-func (g *Generator) extractPrimaryLanguage() string {
-	acceptLang := g.browserConfig.Basic.AcceptLanguage
+func (g *Generator) extractPrimaryLanguage(account ...string) string {
+	acceptLang := g.browserConfig(account...).Basic.AcceptLanguage
 	if acceptLang == "" {
 		return "zh-CN" // 默认值
 	}
@@ -525,8 +525,8 @@ func (g *Generator) extractPrimaryLanguage() string {
 }
 
 // generateLanguagesArray 生成语言数组的JavaScript代码
-func (g *Generator) generateLanguagesArray() string {
-	languages := strings.Split(g.browserConfig.Basic.AcceptLanguage, ",")
+func (g *Generator) generateLanguagesArray(account ...string) string {
+	languages := strings.Split(g.browserConfig(account...).Basic.AcceptLanguage, ",")
 	var jsArray []string
 
 	for _, lang := range languages {

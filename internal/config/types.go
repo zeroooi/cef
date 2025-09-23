@@ -141,3 +141,28 @@ type AppConfig struct {
 	Browser   BrowserConfig   `json:"browser"`   // 浏览器指纹配置
 	Whitelist WhitelistConfig `json:"whitelist"` // 白名单配置
 }
+
+type ExternalConfig struct {
+	AegisAddr struct {
+		Mode string `json:"mode"`
+		Dev  string `json:"dev"`
+		Long string `json:"long"`
+		Pro  string `json:"pro"`
+	} `json:"aegisAddr"`
+}
+
+type GetBrowserConfigResponse struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data struct {
+		ConfigMap map[string]*BrowserConfig `json:"config_map"` // ConfigMap
+	} `json:"data"`
+}
+
+type GetWhitelistConfigResponse struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data struct {
+		ConfigMap map[string]*WhitelistConfig `json:"config_map"` // ConfigMap
+	} `json:"data"`
+}

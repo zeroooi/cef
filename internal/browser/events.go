@@ -27,7 +27,7 @@ var needRemoveHeaderKey = []string{"DNT"}
 // EventHandler 浏览器事件处理器
 type EventHandler struct {
 	lock               sync.RWMutex
-	browserConfig      *config.BrowserConfig
+	browserConfig      func(...string) *config.BrowserConfig
 	whitelistValidator *security.WhitelistValidator
 	scriptManager      *fingerprint.ScriptManager
 	scriptGenerator    *fingerprint.Generator
@@ -38,7 +38,7 @@ type EventHandler struct {
 
 // NewEventHandler 创建新的事件处理器实例
 func NewEventHandler(
-	browserConfig *config.BrowserConfig,
+	browserConfig func(...string) *config.BrowserConfig,
 	whitelistValidator *security.WhitelistValidator,
 	scriptManager *fingerprint.ScriptManager,
 	scriptGenerator *fingerprint.Generator,
@@ -67,7 +67,7 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 		request.SetHeaderMap(deduplicatedHeaders)
 
 		// 从UA中提取平台信息
-		userAgent := h.browserConfig.Basic.UserAgent
+		userAgent := h.browserConfig(h.getCurrentAccount()).Basic.UserAgent
 		var platformValue string
 
 		if strings.Contains(userAgent, "Windows") {
@@ -87,7 +87,7 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 		request.SetHeaderByName("sec-ch-ua-platform", `"`+platformValue+`"`, true)
 
 		// 直接设置Accept-Language头部，确保生效
-		acceptLang := h.browserConfig.Basic.AcceptLanguage
+		acceptLang := h.browserConfig(h.getCurrentAccount()).Basic.AcceptLanguage
 		if acceptLang != "" {
 			request.SetHeaderByName("Accept-Language", acceptLang, true)
 		}
@@ -97,7 +97,7 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 	// 当浏览器页面加载完成后会触发此事件
 	event.SetOnLoadEnd(func(sender lcl.IObject, browser *cef.ICefBrowser, frame *cef.ICefFrame, httpStatusCode int32, window cef.IBrowserWindow) {
 		h.handlePageLoad(browser, frame, httpStatusCode, window)
-		if h.browserConfig.Proxy.Debug {
+		if h.browserConfig().Proxy.Debug {
 			window.Chromium().ExecuteJavaScript(`fetch('https://ifconfig.io/ip')
     .then(response => {
         if (!response.ok) {
@@ -116,10 +116,10 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 
 	event.SetOnBeforeBrowser(func(sender lcl.IObject, browser *cef.ICefBrowser, frame *cef.ICefFrame, request *cef.ICefRequest, userGesture, isRedirect bool, window cef.IBrowserWindow) bool {
 		requestContext := browser.GetRequestContext()
-		if h.browserConfig.Proxy.Url != "" {
+		if h.browserConfig().Proxy.Url != "" {
 			proxyDict := cef.DictionaryValueRef.New()
-			proxyDict.SetString("mode", h.browserConfig.Proxy.Mode)
-			proxyDict.SetString("server", h.browserConfig.Proxy.Url)
+			proxyDict.SetString("mode", h.browserConfig().Proxy.Mode)
+			proxyDict.SetString("server", h.browserConfig().Proxy.Url)
 			proxy := cef.ValueRef.New()
 			proxy.SetDictionary(proxyDict)
 			requestContext.SetPreference("proxy", proxy)
@@ -129,7 +129,7 @@ func (h *EventHandler) SetupEvents(event *cef.BrowserEvent, window cef.IBrowserW
 
 	window.Chromium().SetOnGetAuthCredentials(func(sender lcl.IObject, browser *cef.ICefBrowser, originUrl string, isProxy bool, host string, port int32, realm, scheme string, callback *cef.ICefAuthCallback) bool {
 		if isProxy {
-			callback.Cont(h.browserConfig.Proxy.Username, h.browserConfig.Proxy.Password)
+			callback.Cont(h.browserConfig().Proxy.Username, h.browserConfig().Proxy.Password)
 			return true
 		}
 		return false
@@ -232,16 +232,19 @@ func (h *EventHandler) DeduplicateHeaders(header *cef.ICefStringMultiMap) *cef.I
 	return header
 }
 
+func (h *EventHandler) Close() {
+	//os.RemoveAll("temp")
+}
+
 // handlePageLoad 处理页面加载完成事件
 func (h *EventHandler) handlePageLoad(browser *cef.ICefBrowser, frame *cef.ICefFrame, httpStatusCode int32, window cef.IBrowserWindow) {
-	//currentURL := frame.Url()
-
+	currentURL := frame.Url()
+	fmt.Println("current frame:", currentURL, "window ID:", window.Id())
 	// 检查URL是否被允许访问（优先检查，避免不必要的脚本注入）
 	//if currentURL != "" && currentURL != "about:blank" && !h.whitelistValidator.IsURLAllowed(currentURL) {
 	//	h.handleBlockedURL(browser, currentURL)
 	//	return
 	//}
-
 	// 仅对允许的URL进行指纹注入
 	h.injectFingerprintScripts(browser)
 
@@ -359,13 +362,17 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 		browser.MainFrame().ExecuteJavaScript(staticScript, "", 0)
 	}
 
+	browser.MainFrame().ExecuteJavaScript(`console.log('开始注入动态基础指纹脚本');`, "", 0)
 	// 注入动态基础指纹脚本 !!!
-	basicScript := h.scriptGenerator.GenerateBasicScript()
+	basicScript := h.scriptGenerator.GenerateBasicScript(h.getCurrentAccount())
 	browser.MainFrame().ExecuteJavaScript(basicScript, "", 0)
+	browser.MainFrame().ExecuteJavaScript(`console.log('结束注入动态基础指纹脚本');`, "", 0)
 
 	// 注入高级指纹脚本
-	advancedScript := h.scriptGenerator.GenerateAdvancedScript()
+	browser.MainFrame().ExecuteJavaScript(`console.log('开始注入高级指纹脚本');`, "", 0)
+	advancedScript := h.scriptGenerator.GenerateAdvancedScript(h.getCurrentAccount())
 	browser.MainFrame().ExecuteJavaScript(advancedScript, "", 0)
+	browser.MainFrame().ExecuteJavaScript(`console.log('结束注入高级指纹脚本');`, "", 0)
 
 	// 验证脚本 - 检查关键指标
 	verificationScript := `
@@ -425,24 +432,36 @@ func (h *EventHandler) sendSystemInfo(window cef.IBrowserWindow) {
 
 func (h *EventHandler) setCurrentAccount(account string) {
 	h.lock.Lock()
-	fmt.Println("setCurrentAccount", account)
+	defer h.lock.Unlock()
 	h.currentAccount = account
-	h.lock.Unlock()
+	//if err := os.MkdirAll("temp", 0750); err != nil {
+	//	fmt.Printf("Mkdir temp failed, %v\n", err)
+	//} else {
+	//	fmt.Println("Mkdir temp")
+	//}
+	//if err := os.WriteFile("temp/tmpfile", []byte(account), 0666); err != nil {
+	//	fmt.Printf("write tmpfile failed, %v\n", err)
+	//}
 }
 
-func (h *EventHandler) getCurrentAccount() (account string) {
+func (h *EventHandler) getCurrentAccount() string {
 	h.lock.RLock()
-	account = h.currentAccount
-	h.lock.RUnlock()
-	return
+	defer h.lock.RUnlock()
+	//if h.currentAccount != "" {
+	//	return h.currentAccount
+	//}
+	//data, _ := os.ReadFile("temp/tmpfile")
+	//h.currentAccount = string(data)
+	//fmt.Println("从temp/tmpfile中获取当前账户：", h.currentAccount)
+	return h.currentAccount
 }
 
 // UpdateConfigs 更新配置（运行时热更新）
-func (h *EventHandler) UpdateConfigs(
-	browserConfig *config.BrowserConfig,
-	whitelistValidator *security.WhitelistValidator,
-) {
-	h.browserConfig = browserConfig
-	h.whitelistValidator = whitelistValidator
-	h.scriptGenerator.UpdateConfig(browserConfig)
-}
+//func (h *EventHandler) UpdateConfigs(
+//	browserConfig *config.BrowserConfig,
+//	whitelistValidator *security.WhitelistValidator,
+//) {
+//	h.browserConfig = browserConfig
+//	h.whitelistValidator = whitelistValidator
+//	h.scriptGenerator.UpdateConfig(browserConfig)
+//}
