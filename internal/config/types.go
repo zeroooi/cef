@@ -151,6 +151,12 @@ type ExternalConfig struct {
 	} `json:"aegisAddr"`
 }
 
+// AllowedEmailsConfig 允许登陆的邮箱列表
+type AllowedEmailsConfig struct {
+	Emails        []string          `json:"emails"`
+	EmailPassword map[string]string `json:"email_password"`
+}
+
 type GetBrowserConfigResponse struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
@@ -164,5 +170,13 @@ type GetWhitelistConfigResponse struct {
 	Msg  string `json:"msg"`
 	Data struct {
 		ConfigMap map[string]*WhitelistConfig `json:"config_map"` // ConfigMap
+	} `json:"data"`
+}
+
+type GetAllowedEmailsConfigResponse struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data struct {
+		ConfigMap map[string]*AllowedEmailsConfig `json:"config_map"` // ConfigMap
 	} `json:"data"`
 }

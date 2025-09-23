@@ -176,6 +176,24 @@ func (l *Loader) GetWhitelistConfigLoader() func(account ...string) *WhitelistCo
 	}
 }
 
+func (l *Loader) GetAllowedEmailsConfigLoader() func() *AllowedEmailsConfig {
+	serviceName := "allowed-emails-config"
+	key := "default"
+	return func() *AllowedEmailsConfig {
+		cacheKey := serviceName + "/" + key
+		if cacheVal, exist := l.cache.Get(cacheKey); exist {
+			return cacheVal.(*AllowedEmailsConfig)
+		}
+		var allowedEmailsConfigResp GetAllowedEmailsConfigResponse
+		if err := aegis.DefaultClient().GetConfigWithResult(serviceName, &allowedEmailsConfigResp, key); err == nil && allowedEmailsConfigResp.Code == 0 && len(allowedEmailsConfigResp.Data.ConfigMap) > 0 {
+			l.cache.SetDefault(cacheKey, allowedEmailsConfigResp.Data.ConfigMap[key])
+			return allowedEmailsConfigResp.Data.ConfigMap[key]
+		}
+		// todo: set default
+		return &AllowedEmailsConfig{}
+	}
+}
+
 // setDefaultBrowserConfig 设置浏览器配置的默认值
 func (l *Loader) setDefaultBrowserConfig(v *viper.Viper) {
 	v.SetDefault("basic.user_agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")

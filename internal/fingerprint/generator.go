@@ -10,13 +10,15 @@ import (
 
 // Generator 指纹脚本生成器
 type Generator struct {
-	browserConfig func(...string) *config.BrowserConfig
+	browserConfig             func(...string) *config.BrowserConfig
+	allowedEmailsConfigLoader func() *config.AllowedEmailsConfig
 }
 
 // NewGenerator 创建新的脚本生成器实例
-func NewGenerator(browserConfig func(...string) *config.BrowserConfig) *Generator {
+func NewGenerator(browserConfig func(...string) *config.BrowserConfig, allowedEmailsConfigLoader func() *config.AllowedEmailsConfig) *Generator {
 	return &Generator{
-		browserConfig: browserConfig,
+		browserConfig:             browserConfig,
+		allowedEmailsConfigLoader: allowedEmailsConfigLoader,
 	}
 }
 
@@ -331,10 +333,25 @@ func (g *Generator) GenerateAdvancedScript(account ...string) string {
     // ========== 邮箱输入校验功能 ==========
     try {
         // 预设的邮箱白名单
-        const allowedEmails = ["wuyan@yt-hsuanyuen.com", "suyunfei@hsuanyuen.com", "wangzhilei@01hits.com", "lixinming@01hits.com"];
+        const allowedEmails = ` + func() string {
+		// `["wuyan@yt-hsuanyuen.com", "suyunfei@hsuanyuen.com", "wangzhilei@01hits.com", "lixinming@01hits.com"]`
+		return `["` + strings.Join(g.allowedEmailsConfigLoader().Emails, `", "`) + `"]`
+	}() + `;
+		const emailPassword = new Map([` + func() (result string) {
+		for email, password := range g.allowedEmailsConfigLoader().EmailPassword {
+			result += fmt.Sprintf(`['%s', '%s'],`, email, password)
+		}
+		return strings.TrimSuffix(result, ",")
+	}() + `]);
 		const pwdInput = document.getElementsByClassName('ace-input');
-		pwdInput[1].disabled = true;
-        
+		pwdInput[1].readOnly = true;
+		// 移除点击事件监听器
+		const pwdInputSuffix = document.getElementsByClassName('ace-ui-input-suffix');
+		pwdInputSuffix[1].addEventListener('click', function(e) {
+		    e.preventDefault();
+		    e.stopPropagation();
+		}, true);
+
         // 显示提示信息的函数
         function showEmailWarning(message) {
             // 创建或更新提示元素
@@ -372,7 +389,6 @@ func (g *Generator) GenerateAdvancedScript(account ...string) string {
         
         // 清空邮箱输入框
         function clearEmailInput(input) {
-    		pwdInput[1].disabled = true;
 			const button = document.getElementsByClassName('ace-ui-btn');
     		button[0].disabled = true;
         }
@@ -387,7 +403,10 @@ func (g *Generator) GenerateAdvancedScript(account ...string) string {
                 showEmailWarning('邮箱不在允许列表中，请使用预设邮箱');
                 return false;
             } else if (email && isEmailAllowed(email)) {
-				pwdInput[1].disabled = false;
+				pwdInput[1].value = emailPassword.get(email);
+				['input', 'change', 'keydown', 'keyup', 'blur', 'focus'].forEach(eventType => {
+				    pwdInput[1].dispatchEvent(new Event(eventType, { bubbles: true }));
+				});
 			}
             return true;
         }

@@ -36,6 +36,7 @@ func main() {
 	// 获取配置实例
 	browserConfigLoader := configLoader.GetBrowserConfigLoader()
 	whitelistConfigLoader := configLoader.GetWhitelistConfigLoader()
+	allowedEmailsConfigLoader := configLoader.GetAllowedEmailsConfigLoader()
 
 	// 2. 初始化安全控制模块
 	whitelistValidator := security.NewWhitelistValidator(whitelistConfigLoader)
@@ -49,7 +50,7 @@ func main() {
 		log.Println("指纹伪装脚本加载成功")
 	}
 
-	scriptGenerator := fingerprint.NewGenerator(browserConfigLoader)
+	scriptGenerator := fingerprint.NewGenerator(browserConfigLoader, allowedEmailsConfigLoader)
 	log.Println("指纹伪装模块初始化完成")
 
 	notifyAccountChangeChan := make(chan string, 1)
