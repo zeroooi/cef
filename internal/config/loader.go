@@ -118,10 +118,11 @@ func (l *Loader) LoadWhitelistConfig() error {
 
 	// 将配置值映射到结构体
 	l.whitelistConfig.AllowedDomains = v.GetStringSlice("allowed_domains")
+	l.whitelistConfig.NotAllowedDomains = v.GetStringSlice("not_allowed_domains")
 	l.whitelistConfig.BlockedMessage = v.GetString("blocked_message")
 	l.whitelistConfig.RedirectBlockedTo = v.GetString("redirect_blocked_to")
 
-	fmt.Printf("白名单配置加载完成: 允许域名数量=%d\n", len(l.whitelistConfig.AllowedDomains))
+	fmt.Printf("白名单配置加载完成: 允许域名数量=%d，不允许域名数量=%d\n", len(l.whitelistConfig.AllowedDomains), len(l.whitelistConfig.NotAllowedDomains))
 
 	return nil
 }

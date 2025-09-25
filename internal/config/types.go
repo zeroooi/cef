@@ -132,6 +132,7 @@ type BrowserConfig struct {
 // WhitelistConfig 网站白名单配置结构
 type WhitelistConfig struct {
 	AllowedDomains    []string `json:"allowed_domains"`     // 允许访问的域名列表
+	NotAllowedDomains []string `json:"not_allowed_domains"` // 不允许访问的域名列表
 	BlockedMessage    string   `json:"blocked_message"`     // 访问被阻止时的提示消息
 	RedirectBlockedTo string   `json:"redirect_blocked_to"` // 被阻止时重定向的URL
 }

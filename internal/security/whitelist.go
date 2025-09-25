@@ -46,16 +46,29 @@ func (v *WhitelistValidator) IsURLAllowed(requestURL string, account ...string) 
 	hostname := strings.ToLower(parsedURL.Hostname())
 
 	// 检查是否在白名单中
+	inAllowedDomain := false
 	for _, allowedDomain := range v.config(account...).AllowedDomains {
 		allowedDomain = strings.ToLower(allowedDomain)
 
 		// 支持精确匹配和子域名匹配
 		if hostname == allowedDomain || strings.HasSuffix(hostname, "."+allowedDomain) {
-			return true
+			inAllowedDomain = true
+		}
+	}
+	if !inAllowedDomain {
+		return false
+	}
+	// 检查是否在黑名单中
+	for _, notAllowedDomain := range v.config(account...).NotAllowedDomains {
+		notAllowedDomain = strings.ToLower(notAllowedDomain)
+
+		// 支持精确匹配和子域名匹配
+		if hostname == notAllowedDomain || strings.HasSuffix(hostname, "."+notAllowedDomain) {
+			return false
 		}
 	}
 
-	return false
+	return true
 }
 
 // GetBlockedMessage 获取访问被阻止时的消息
