@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+const (
+	AdLoginUrl = "https://ad.oceanengine.com/pages/login/index.html"
+)
+
 // WhitelistValidator 白名单验证器
 type WhitelistValidator struct {
 	config func(...string) *config.WhitelistConfig
@@ -32,6 +36,10 @@ func (v *WhitelistValidator) IsURLAllowed(requestURL string, account ...string) 
 	}
 	if parsedURL.Scheme == "bytedance" {
 		return true
+	}
+	// 特殊判断AD、千川系统的登录页面,不允许跳转
+	if requestURL == AdLoginUrl {
+		return false
 	}
 
 	// 获取域名并转换为小写
