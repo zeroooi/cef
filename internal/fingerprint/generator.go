@@ -330,7 +330,17 @@ func (g *Generator) GenerateAdvancedScript(account ...string) string {
         console.error('字体伪装失败:', e);
     }
     
-    // ========== 邮箱输入校验功能 ==========
+    console.log('高级指纹伪装完成');
+    
+})();
+`
+}
+
+// GenerateLoginScript 创建方舟登陆脚本
+func (g *Generator) GenerateLoginScript() string {
+	return `
+(function() {
+// ========== 邮箱输入校验功能 ==========
     try {
         // 预设的邮箱白名单
         const allowedEmails = ` + func() string {
@@ -497,10 +507,9 @@ func (g *Generator) GenerateAdvancedScript(account ...string) string {
         console.error('邮箱输入校验功能初始化失败:', e);
     }
     
-    console.log('高级指纹伪装完成');
+    console.log('方舟登陆脚本完成');
     
-})();
-`
+})();`
 }
 
 // UpdateConfig 更新配置（运行时热更新）

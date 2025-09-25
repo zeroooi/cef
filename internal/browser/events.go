@@ -6,6 +6,7 @@ import (
 	"cef/internal/config"
 	"cef/internal/fingerprint"
 	"cef/internal/security"
+	"fmt"
 	"net/url"
 	"regexp"
 	"strings"
@@ -245,22 +246,23 @@ func (h *EventHandler) Close() {
 // handlePageLoad 处理页面加载完成事件
 func (h *EventHandler) handlePageLoad(browser *cef.ICefBrowser, frame *cef.ICefFrame, httpStatusCode int32, window cef.IBrowserWindow) {
 	currentURL := frame.Url()
+	fmt.Println("current frame:", currentURL, "window ID:", window.Id())
 	// 检查URL是否被允许访问（优先检查，避免不必要的脚本注入）
 	if currentURL != "" && currentURL != "about:blank" && !h.whitelistValidator.IsURLAllowed(currentURL) {
 		h.handleBlockedURL(browser, currentURL)
 		return
 	}
 	// 仅对允许的URL进行指纹注入
-	h.injectFingerprintScripts(browser)
+	h.injectFingerprintScripts(browser, frame, window)
 
 	// 延迟补强注入（仅一次）
 	go func() {
 		time.Sleep(200 * time.Millisecond)
-		h.injectFingerprintScripts(browser)
+		h.injectFingerprintScripts(browser, frame, window)
 	}()
 
 	// 发送系统信息到前端
-	h.sendSystemInfo(window)
+	//h.sendSystemInfo(window)
 }
 
 // handleBlockedURL 处理被阻止的URL访问
@@ -289,19 +291,23 @@ func (h *EventHandler) handleBlockedURL(browser *cef.ICefBrowser, currentURL str
 }
 
 // injectFingerprintScripts 注入指纹伪装脚本
-func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
-	targetFrame := browser.MainFrame()
-	// 注入HTTP头部修复脚本
-	headersFixScript := h.scriptManager.GetHeadersFixScript()
-	if headersFixScript != "" {
-		targetFrame.ExecuteJavaScript(headersFixScript, "", 0)
+func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser, frame *cef.ICefFrame, window cef.IBrowserWindow) {
+	executeJavaScript := func(scriptName, script string) {
+		if script == "" {
+			return
+		}
+		//targetFrame := browser.MainFrame()
+		targetFrame := frame
+		window.Chromium().ExecuteJavaScript(fmt.Sprintf(`console.log('开始注入[%s]脚本');`, scriptName), "", targetFrame, 0)
+		window.Chromium().ExecuteJavaScript(script, "", targetFrame, 0)
+		window.Chromium().ExecuteJavaScript(fmt.Sprintf(`console.log('结束注入[%s]脚本');`, scriptName), "", targetFrame, 0)
 	}
 
+	// 注入HTTP头部修复脚本
+	executeJavaScript("HTTP头部修复", h.scriptManager.GetHeadersFixScript())
+
 	// 注入WebSocket修复脚本
-	websocketFixScript := h.scriptManager.GetWebSocketFixScript()
-	if websocketFixScript != "" {
-		targetFrame.ExecuteJavaScript(websocketFixScript, "", 0)
-	}
+	executeJavaScript("WebSocket修复", h.scriptManager.GetWebSocketFixScript())
 
 	// 注入CORS禁用脚本（在指纹脚本之前）
 	corsScript := `
@@ -356,29 +362,24 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 		
 		console.log('CORS 禁用和 WebSocket 增强设置完成');
 	`
-	targetFrame.ExecuteJavaScript(corsScript, "", 0)
+	executeJavaScript("CORS禁用", corsScript)
 
 	// 最简单的测试脚本 - 确保JavaScript执行正常
-	ultraSimpleTest := `console.log('🔥 JavaScript执行测试 - 成功！');`
-	targetFrame.ExecuteJavaScript(ultraSimpleTest, "", 0)
+	executeJavaScript("测试", `console.log('🔥 JavaScript执行测试 - 成功！');`)
 
 	// 注入静态指纹脚本
 	if h.scriptManager.IsScriptLoaded() {
-		staticScript := h.scriptManager.GetStaticScript()
-		targetFrame.ExecuteJavaScript(staticScript, "", 0)
+		executeJavaScript("静态指纹", h.scriptManager.GetStaticScript())
 	}
 
-	targetFrame.ExecuteJavaScript(`console.log('开始注入动态基础指纹脚本');`, "", 0)
 	// 注入动态基础指纹脚本 !!!
-	basicScript := h.scriptGenerator.GenerateBasicScript(h.getCurrentAccount())
-	targetFrame.ExecuteJavaScript(basicScript, "", 0)
-	targetFrame.ExecuteJavaScript(`console.log('结束注入动态基础指纹脚本');`, "", 0)
+	executeJavaScript("动态基础指纹", h.scriptGenerator.GenerateBasicScript(h.getCurrentAccount()))
 
 	// 注入高级指纹脚本
-	targetFrame.ExecuteJavaScript(`console.log('开始注入高级指纹脚本');`, "", 0)
-	advancedScript := h.scriptGenerator.GenerateAdvancedScript(h.getCurrentAccount())
-	targetFrame.ExecuteJavaScript(advancedScript, "", 0)
-	targetFrame.ExecuteJavaScript(`console.log('结束注入高级指纹脚本');`, "", 0)
+	executeJavaScript("高级指纹", h.scriptGenerator.GenerateAdvancedScript(h.getCurrentAccount()))
+
+	// 方舟登陆脚本
+	executeJavaScript("方舟登陆", h.scriptGenerator.GenerateLoginScript())
 
 	// 验证脚本 - 检查关键指标
 	verificationScript := `
@@ -407,7 +408,7 @@ func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser) {
 		console.log('🔍 === 验证完成 ===');
 	}, 1000);
 	`
-	targetFrame.ExecuteJavaScript(verificationScript, "", 0)
+	executeJavaScript("验证", verificationScript)
 }
 
 // sendSystemInfo 发送系统信息到前端
@@ -443,8 +444,9 @@ func (h *EventHandler) setCurrentAccount(account string) {
 	h.lock.Lock()
 	defer h.lock.Unlock()
 	if account != h.currentAccount {
-		h.notifyAccountChangeChan <- account
+		//h.notifyAccountChangeChan <- account
 		h.currentAccount = account
+		fmt.Println("set current account:", account)
 	}
 	//if err := os.MkdirAll("temp", 0750); err != nil {
 	//	fmt.Printf("Mkdir temp failed, %v\n", err)
