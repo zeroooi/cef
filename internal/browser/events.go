@@ -253,12 +253,11 @@ func (h *EventHandler) handlePageLoad(browser *cef.ICefBrowser, frame *cef.ICefF
 		return
 	}
 	// 仅对允许的URL进行指纹注入
-	h.injectFingerprintScripts(browser, frame, window)
-
+	h.injectFingerprintScripts(browser, frame)
 	// 延迟补强注入（仅一次）
 	go func() {
 		time.Sleep(200 * time.Millisecond)
-		h.injectFingerprintScripts(browser, frame, window)
+		h.injectFingerprintScripts(browser)
 	}()
 
 	// 发送系统信息到前端
@@ -291,16 +290,21 @@ func (h *EventHandler) handleBlockedURL(browser *cef.ICefBrowser, currentURL str
 }
 
 // injectFingerprintScripts 注入指纹伪装脚本
-func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser, frame *cef.ICefFrame, window cef.IBrowserWindow) {
+func (h *EventHandler) injectFingerprintScripts(browser *cef.ICefBrowser, frame ...*cef.ICefFrame) {
 	executeJavaScript := func(scriptName, script string) {
 		if script == "" {
 			return
 		}
-		//targetFrame := browser.MainFrame()
-		targetFrame := frame
-		window.Chromium().ExecuteJavaScript(fmt.Sprintf(`console.log('开始注入[%s]脚本');`, scriptName), "", targetFrame, 0)
-		window.Chromium().ExecuteJavaScript(script, "", targetFrame, 0)
-		window.Chromium().ExecuteJavaScript(fmt.Sprintf(`console.log('结束注入[%s]脚本');`, scriptName), "", targetFrame, 0)
+		targetFrame := browser.MainFrame()
+		if len(frame) > 0 && frame[0].IsValid() {
+			targetFrame = frame[0]
+		}
+		if !targetFrame.IsValid() {
+			return
+		}
+		targetFrame.ExecuteJavaScript(fmt.Sprintf(`console.log('开始注入[%s]脚本');`, scriptName), "", 0)
+		targetFrame.ExecuteJavaScript(script, "", 0)
+		targetFrame.ExecuteJavaScript(fmt.Sprintf(`console.log('结束注入[%s]脚本');`, scriptName), "", 0)
 	}
 
 	// 注入HTTP头部修复脚本
