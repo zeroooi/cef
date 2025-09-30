@@ -51,10 +51,10 @@ jobs:
         run: |
           cd $RUNNER_WORKSPACE/cef
           
-          energy build -o="悟空浏览器.exe"
-          energy package -f="悟空浏览器.exe" -o="悟空浏览器安装包.exe" -c
+          energy build -o="wukongliulanqi.exe"
+          energy package -f="wukongliulanqi.exe" -o="wukongliulanqi-instell" -c
           
-          mv "$RUNNER_WORKSPACE/cef/build/windows/悟空浏览器安装包.exe" D:/app/install
+          mv "$RUNNER_WORKSPACE/cef/build/windows/wukongliulanqi-instell.exe" D:/app/install
         shell: bash
 
 #      - name: Install ENERGY CEF 109-32
